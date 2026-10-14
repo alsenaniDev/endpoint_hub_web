@@ -1,0 +1,283 @@
+<div class="page runner-page" [class.workbench-runner]="isWorkbench" [class.embedded-runner]="embedded">
+  <ng-container *ngIf="!isWorkbench">
+    <div class="back-link">
+      <a [routerLink]="detailRoute">{{ 'endpoints.backToDetails' | t }}</a>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="isWorkbench && !embedded && endpoint() as workbenchEndpoint">
+    <nav class="runner-breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/workbench/endpoints">{{ 'endpoints.title' | t }}</a>
+      <i class="pi pi-angle-right" aria-hidden="true"></i>
+      <span>{{ organization.structuralOnly() ? workbenchEndpoint.systemId : workbenchEndpoint.systemName }}</span>
+      <i class="pi pi-angle-right" aria-hidden="true"></i>
+      <span>{{ organization.structuralOnly() ? workbenchEndpoint.environmentId : workbenchEndpoint.environmentName }}</span>
+      <i class="pi pi-angle-right" aria-hidden="true"></i>
+      <strong>{{ 'runner.testingWorkspace' | t }}</strong>
+    </nav>
+  </ng-container>
+
+  <header *ngIf="isWorkbench && endpoint() as workbenchEndpoint" class="workbench-endpoint-header">
+    <div class="endpoint-heading">
+      <app-method-badge [method]="workbenchEndpoint.method"></app-method-badge>
+      <div class="endpoint-heading-copy">
+        <h1>{{ workbenchEndpoint.path }}</h1>
+        <p>{{ organization.structuralOnly() ? ('runner.testingWorkspace' | t) : (workbenchEndpoint.summary || workbenchEndpoint.operationId || ('runner.testingWorkspace' | t)) }}</p>
+      </div>
+      <span *ngIf="workbenchEndpoint.isDeprecated" class="wb-endpoint-badge deprecated">
+        {{ 'endpoints.detail.deprecated' | t }}
+      </span>
+    </div>
+    <div class="endpoint-heading-actions">
+      <span class="environment-chip"><i class="pi pi-globe" aria-hidden="true"></i>
+        {{ organization.structuralOnly() ? workbenchEndpoint.environmentId : workbenchEndpoint.environmentName }}
+      </span>
+      <button type="button" class="mock-toggle" [class.active]="mockMode()" (click)="toggleMockMode()">
+        <span class="mock-icon">⚗</span>
+        {{ mockMode() ? ('runner.mockOn' | t) : ('runner.mockOff' | t) }}
+      </button>
+      <button class="wb-send-button" [class.mock-send]="mockMode()" (click)="run()" [disabled]="running()">
+        <i [class]="running() ? 'pi pi-spin pi-spinner' : (mockMode() ? 'pi pi-bolt' : 'pi pi-send')" aria-hidden="true"></i>
+        {{ running() ? ('runner.running' | t) : (mockMode() ? ('runner.runMock' | t) : ('runner.sendRequest' | t)) }}
+      </button>
+    </div>
+  </header>
+
+  <app-loading [loading]="loading()"></app-loading>
+  <div *ngIf="!loading() && errorKey()" class="runner-load-error" role="alert">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <strong>{{ errorKey()! | t }}</strong>
+    <span>{{ 'runner.endpointLoadFailed' | t }}</span>
+    <a [routerLink]="backToList()">{{ 'endpoints.backToList' | t }}</a>
+  </div>
+
+  <ng-container *ngIf="!loading() && endpoint() as currentEndpoint">
+    <div *ngIf="!isWorkbench" class="runner-header">
+      <app-method-badge [method]="currentEndpoint.method"></app-method-badge>
+      <span class="ep-path">{{ currentEndpoint.path }}</span>
+      <button class="mock-toggle" [class.active]="mockMode()" (click)="toggleMockMode()">
+        <span class="mock-icon">⚗</span>
+        {{ mockMode() ? ('runner.mockOn' | t) : ('runner.mockOff' | t) }}
+      </button>
+    </div>
+
+    <div class="mock-banner" *ngIf="mockMode()">
+      <span><i class="pi pi-info-circle" aria-hidden="true"></i>{{ 'runner.mockBanner' | t }}</span>
+      <strong>{{ 'runner.mockNoNetwork' | t }}</strong>
+    </div>
+
+    <div class="runner-layout" [class.workbench-runner-layout]="isWorkbench">
+      <aside *ngIf="isWorkbench && !embedded" class="resource-pane">
+        <div class="resource-pane-heading">
+          <span class="eyebrow">{{ 'runner.resourceContext' | t }}</span>
+          <h2>{{ 'runner.hierarchy' | t }}</h2>
+        </div>
+        <div class="resource-tree">
+          <div class="resource-level organization-level">
+            <i class="pi pi-building" aria-hidden="true"></i>
+            <span>{{ organization.structuralOnly() ? organization.activeOrganization()?.id : organization.activeOrganization()?.name }}</span>
+          </div>
+          <div class="resource-level">
+            <i class="pi pi-sitemap" aria-hidden="true"></i>
+            <span>{{ organization.structuralOnly() ? currentEndpoint.systemId : currentEndpoint.systemName }}</span>
+          </div>
+          <div class="resource-level">
+            <i class="pi pi-globe" aria-hidden="true"></i>
+            <span>{{ organization.structuralOnly() ? currentEndpoint.environmentId : currentEndpoint.environmentName }}</span>
+          </div>
+          <div class="resource-level active-resource">
+            <i class="pi pi-share-alt" aria-hidden="true"></i>
+            <span class="resource-endpoint">
+              <app-method-badge [method]="currentEndpoint.method"></app-method-badge>
+              <code>{{ currentEndpoint.path }}</code>
+            </span>
+          </div>
+        </div>
+        <div class="resource-meta">
+          <span>{{ 'runner.endpointId' | t }}</span>
+          <code>{{ currentEndpoint.id }}</code>
+        </div>
+      </aside>
+
+      <div class="request-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">{{ 'runner.request' | t }}</span>
+            <h2 class="panel-title">{{ 'runner.configureRequest' | t }}</h2>
+          </div>
+          <span class="request-method">{{ currentEndpoint.method }}</span>
+        </div>
+
+        <!-- Auth Profile -->
+        <div class="form-section" *ngIf="!mockMode() && auth.hasPermission('authprofiles.view')">
+          <label>{{ 'runner.authProfile' | t }}</label>
+          <p-dropdown
+            [(ngModel)]="selectedAuthProfileId"
+            [options]="authProfileOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            [placeholder]="'runner.noAuth' | t">
+          </p-dropdown>
+        </div>
+
+        <!-- URL Override -->
+        <div class="form-section" *ngIf="!mockMode()">
+          <label>{{ 'runner.baseUrlOverride' | t }}</label>
+          <input type="text" [(ngModel)]="baseUrlOverride" [placeholder]="currentEndpoint.baseUrl">
+          <div class="url-preview">
+            <span class="url-preview-label">{{ 'runner.target' | t }}</span>
+            <span class="url-preview-value">{{ resolvedUrl() }}</span>
+          </div>
+        </div>
+
+        <!-- Route Params -->
+        <div class="form-section" *ngIf="routeParams().length">
+          <label>{{ 'runner.routeParams' | t }}</label>
+          <div *ngFor="let p of routeParams()" class="kv-row">
+            <span class="kv-key">{{ p.name }}</span>
+            <input type="text" [(ngModel)]="routeParamValues[p.name]" [placeholder]="p.example || p.name">
+          </div>
+        </div>
+
+        <!-- Query Params -->
+        <div class="form-section" *ngIf="queryParams().length">
+          <label>{{ 'runner.queryParams' | t }}</label>
+          <div *ngFor="let p of queryParams()" class="kv-row">
+            <span class="kv-key">{{ p.name }}<span *ngIf="p.required" class="req-star">*</span></span>
+            <p-dropdown
+              *ngIf="getEnumOptions(p)"
+              [(ngModel)]="queryParamValues[p.name]"
+              [options]="getEnumOptions(p)!"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              placeholder="— select —"
+              styleClass="kv-enum-dropdown">
+            </p-dropdown>
+            <input *ngIf="!getEnumOptions(p)" type="text" [(ngModel)]="queryParamValues[p.name]"
+              [placeholder]="p.example || ''">
+          </div>
+        </div>
+
+        <!-- Custom Headers -->
+        <div class="form-section" *ngIf="!mockMode()">
+          <label>{{ 'runner.customHeaders' | t }}</label>
+          <div *ngFor="let h of customHeaders; let i = index" class="kv-row">
+            <input type="text" [(ngModel)]="h.key" [placeholder]="'runner.headerName' | t">
+            <input type="text" [(ngModel)]="h.value" placeholder="Value">
+            <button class="btn-icon" (click)="removeHeader(i)">✕</button>
+          </div>
+          <button class="btn-sm-outline" (click)="addHeader()">{{ 'runner.addHeader' | t }}</button>
+        </div>
+
+        <!-- Request Body -->
+        <div class="form-section" *ngIf="hasBody()">
+          <div class="body-label-row">
+            <label>{{ 'runner.requestBody' | t }}</label>
+            <button class="btn-reset-body" (click)="requestBody = buildBodyShape(currentEndpoint.requestBodies[0])"
+              [title]="'runner.resetBody' | t">↺ {{ 'runner.resetBody' | t }}</button>
+          </div>
+          <textarea [(ngModel)]="requestBody" rows="10" class="code-area" placeholder="{}"></textarea>
+        </div>
+
+        <!-- Mock Response Editor -->
+        <div class="form-section mock-editor" *ngIf="mockMode()">
+          <div class="mock-editor-header">
+            <label>{{ 'runner.mockResponse' | t }}</label>
+            <div class="mock-editor-actions">
+              <p-dropdown
+                [(ngModel)]="selectedMockStatusCode"
+                (ngModelChange)="onMockStatusChange($event)"
+                [options]="mockStatusOptions()"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="mock-status-dropdown">
+              </p-dropdown>
+              <button class="btn-sm-outline" (click)="regenerateMock()">{{ 'runner.regenerate' | t }}</button>
+            </div>
+          </div>
+          <textarea [(ngModel)]="mockResponseBody" rows="12" class="code-area mock-body-area"></textarea>
+        </div>
+
+        <button *ngIf="!isWorkbench" class="btn-run" [class.btn-mock]="mockMode()" (click)="run()" [disabled]="running()">
+          {{ running() ? ('runner.running' | t) : (mockMode() ? ('runner.runMock' | t) : ('runner.sendRequest' | t)) }}
+        </button>
+      </div>
+
+      <div class="response-panel">
+        <div class="panel-heading response-heading">
+          <div>
+            <span class="eyebrow">{{ 'runner.response' | t }}</span>
+            <h2 class="panel-title">{{ 'runner.responseInspector' | t }}</h2>
+          </div>
+          <span *ngIf="result() && !running()" class="response-indicator" [class.success]="result()!.isSuccess">
+            {{ result()!.isSuccess ? 'OK' : 'ERROR' }}
+          </span>
+        </div>
+        <div *ngIf="!result() && !running()" class="empty-response">
+          {{ mockMode() ? ('runner.emptyMockResponse' | t) : ('runner.emptyResponse' | t) }}
+        </div>
+        <app-loading [loading]="running()" [message]="'runner.waitingResponse' | t"></app-loading>
+        <ng-container *ngIf="result() && !running()">
+          <div class="response-meta">
+            <span class="status-badge" [class]="result()!.isSuccess ? 'success' : 'error'">
+              {{ result()!.statusCode ?? (result()!.isSuccess ? 'OK' : 'ERR') }}
+            </span>
+            <span class="response-time">{{ result()!.responseTimeMs }}ms</span>
+            <span class="mock-badge" *ngIf="isMockResult()">⚗ MOCK</span>
+          </div>
+          <!-- Connection / transport error -->
+          <div class="response-error" *ngIf="result()!.error">
+            <span class="response-error-icon">⚠</span>
+            <span>{{ result()!.error }}</span>
+          </div>
+          <div class="response-body" *ngIf="result()!.responseBody != null">
+            <div class="section-label-row">
+              <span class="section-label">{{ 'runner.body' | t }}</span>
+              <button class="btn-copy" (click)="copyResponse()" [class.copied]="copied()">{{ copied() ? ('runner.copied'
+                | t) : ('runner.copy' | t) }}</button>
+            </div>
+            <app-json-viewer [content]="result()!.responseBody ?? null"></app-json-viewer>
+          </div>
+          <div class="response-headers" *ngIf="result()!.responseHeaders && hasResponseHeaders()">
+            <div class="section-label">{{ 'runner.responseHeaders' | t }}</div>
+            <app-json-viewer [content]="result()!.responseHeaders | json"></app-json-viewer>
+          </div>
+        </ng-container>
+
+        <section *ngIf="isWorkbench" class="run-history">
+          <header class="history-heading">
+            <div>
+              <span class="eyebrow">{{ 'runner.runHistory' | t }}</span>
+              <h3>{{ 'runner.recentRuns' | t }}</h3>
+            </div>
+            <button *ngIf="canViewHistory()" type="button" class="history-refresh" (click)="loadHistory()"
+              [disabled]="historyLoading()" [attr.aria-label]="'common.refresh' | t">
+              <i [class]="historyLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'" aria-hidden="true"></i>
+            </button>
+          </header>
+          <p *ngIf="!canViewHistory()" class="history-unavailable" role="note">
+            {{ 'runner.historyRequiresRead' | t }}
+          </p>
+          <p *ngIf="historyError() as historyErrorKey" class="history-error" role="alert">
+            {{ historyErrorKey | t }}
+          </p>
+          <p *ngIf="canViewHistory() && historyLoading()" class="history-loading" role="status">
+            {{ 'common.loading' | t }}
+          </p>
+          <ng-container *ngIf="canViewHistory() && !historyLoading() && !historyError()">
+            <div *ngFor="let item of runHistory()" class="history-entry">
+              <time [attr.datetime]="item.createdAt">{{ item.createdAt | date:'shortTime' }}</time>
+              <span class="history-result" [class.success]="item.isSuccess">
+                {{ item.statusCode ?? (item.isSuccess ? 'OK' : 'ERR') }}
+              </span>
+              <small>{{ item.responseTimeMs ?? 0 }} ms</small>
+            </div>
+            <p *ngIf="!runHistory().length" class="history-empty">{{ 'runner.noRunHistory' | t }}</p>
+          </ng-container>
+        </section>
+      </div>
+    </div>
+  </ng-container>
+</div>

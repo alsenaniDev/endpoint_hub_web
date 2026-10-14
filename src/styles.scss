@@ -1,0 +1,787 @@
+/* ── PrimeNG 16 base styles ──────────────────────────────── */
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeicons/primeicons.css";
+
+:root {
+  --bg-base: #F4F6F8;
+  --bg-surface: #FFFFFF;
+  --bg-hover: #F8FAFC;
+  --bg-hover2: #EEF2F6;
+  --border: #D9E0E7;
+  --text: #17202A;
+  --text-muted: #73808D;
+  --text-subtle: #87939F;
+  --text-secondary: #5F6C79;
+  --accent: #2563EB;
+  --accent-fg: #FFFFFF;
+  --blue: #2563EB;
+  --green: #16805C;
+  --green-text: #147A57;
+  --red: #C7383D;
+  --yellow: #A15C00;
+  --orange: #A15C00;
+  --green-bg: #E7F7F1;
+  --red-bg: #FDEDEE;
+  --yellow-bg: #FFF5DC;
+  --blue-bg: #EEF4FF;
+  --primary: #17202A;
+  --primary-fg: #FFFFFF;
+  --code: #101820;
+  --code-fg: #E2EAF2;
+  --code-border: #273746;
+  --on-solid: #FFFFFF;
+  --status-fg: #FFFFFF;
+  --scrim: rgb(16 24 32 / 35%);
+  --sidebar-fg: #D6DEE7;
+  --sidebar-muted: #AEBBC8;
+  --sidebar-subtle: #98A7B5;
+  --sidebar-hover: #1D2C3B;
+  --sidebar-border: rgb(255 255 255 / 8%);
+}
+
+/* Resolve aliases on both theme roots so inherited values follow theme changes. */
+:root, body.dark-mode {
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, var(--text));
+  --sidebar-selected: color-mix(in srgb, var(--accent) 25%, var(--code));
+  --wb-canvas: var(--bg-base);
+  --wb-surface: var(--bg-surface);
+  --wb-ink: var(--text);
+  --wb-muted: var(--text-muted);
+  --wb-readable-muted: var(--text-secondary);
+  --wb-subtle: var(--text-subtle);
+  --wb-border: var(--border);
+  --wb-sidebar: var(--code);
+  --wb-sidebar-hover: var(--sidebar-hover);
+  --wb-accent: var(--accent);
+  --wb-accent-soft: var(--blue-bg);
+  --wb-success: var(--green);
+  --wb-success-bg: var(--green-bg);
+  --wb-warning: var(--yellow);
+  --wb-warning-bg: var(--yellow-bg);
+  --wb-danger: var(--red);
+  --wb-danger-bg: var(--red-bg);
+  --wb-code: var(--code);
+  --wb-shadow: var(--shadow-sm);
+  --surface-ground: var(--bg-base);
+  --surface-card: var(--bg-surface);
+  --surface-overlay: var(--bg-surface);
+  --surface-border: var(--border);
+  --text-color: var(--text);
+  --text-color-secondary: var(--text-secondary);
+  --primary-color: var(--accent);
+  --primary-color-text: var(--accent-fg);
+  --highlight-bg: var(--blue-bg);
+  --highlight-text-color: var(--accent);
+}
+
+:root {
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+  --shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+
+body.dark-mode {
+  --bg-base: #0F172A;
+  --bg-surface: #1E293B;
+  --bg-hover: #334155;
+  --bg-hover2: #475569;
+  --border: #334155;
+  --text: #F1F5F9;
+  --text-muted: #CBD5E1;
+  --text-subtle: #64748B;
+  --text-secondary: #CBD5E1;
+  --accent: #60A5FA;
+  --accent-fg: #0F172A;
+  --blue: #60A5FA;
+  --green: #4ADE80;
+  --green-text: #4ADE80;
+  --status-fg: #0F172A;
+  --red: #F87171;
+  --yellow: #FCD34D;
+  --orange: #FB923C;
+  --green-bg: #14532D;
+  --red-bg: #450A0A;
+  --yellow-bg: #422006;
+  --blue-bg: #1E3A5F;
+  --primary: #F1F5F9;
+  --primary-fg: #0F172A;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .3);
+  --shadow: 0 4px 12px rgba(0, 0, 0, .4);
+}
+
+/* Global styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
+}
+
+a {
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-hover2);
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  outline: none;
+}
+
+select option {
+  background: var(--bg-surface);
+  color: var(--text);
+}
+
+/* ── Global component styles (TWK Design System) ─────────────────── */
+
+/* Cards / surfaces */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Primary button — ink fill */
+.btn-primary,
+button.btn-primary {
+  background: var(--primary);
+  color: var(--primary-fg);
+  border: none;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.85;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Secondary button — outline */
+.btn-secondary,
+button.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--bg-hover2);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Danger button */
+.btn-danger,
+button.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--red);
+}
+
+/* Status badge pills */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-active,
+.badge-success {
+  background: var(--green-bg);
+  color: var(--green-text);
+}
+
+.badge-suspended,
+.badge-warning {
+  background: var(--yellow-bg);
+  color: var(--yellow);
+}
+
+.badge-deleted,
+.badge-danger,
+.badge-error {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.badge-info,
+.badge-blue {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+/* Page layout */
+.page {
+  padding: 28px 32px;
+  // max-width: 1400px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.page-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+/* Inputs & selects */
+input,
+select,
+textarea {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 8px 12px;
+  transition: border-color 0.15s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.data-table td {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+  width: 480px;
+  max-width: 95vw;
+  box-shadow: var(--shadow);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 0;
+}
+
+.pagination button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pagination button.active {
+  background: var(--primary);
+  color: var(--primary-fg);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Responsive utilities ──────────────────────────────────────── */
+
+/* Pages */
+
+/* ── PrimeNG Dropdown: trigger (inline) global styles ────────────── */
+.p-dropdown {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  min-height: 38px !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s;
+  width: 300px;          /* consistent default width */
+}
+
+.p-dropdown:not(.p-disabled):hover {
+  border-color: var(--text-secondary) !important;
+}
+
+.p-dropdown.p-focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent) !important;
+}
+
+.p-dropdown .p-dropdown-label {
+  color: var(--text) !important;
+  font-size: 13px !important;
+  padding: 8px 4px 8px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.p-dropdown .p-dropdown-label.p-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.p-dropdown .p-dropdown-trigger {
+  color: var(--text-secondary) !important;
+  width: 2rem !important;
+}
+
+.p-dropdown .p-dropdown-clear-icon {
+  color: var(--text-secondary) !important;
+  font-size: 10px !important;
+}
+
+/* Inside a .form-group the dropdown should fill the container */
+.form-group .p-dropdown {
+  width: 100% !important;
+}
+
+/* ── PrimeNG Dropdown: panel (overlay) overrides ────────────────── */
+/* The overlay panel is appended to <body>; component ::ng-deep can't reach it. */
+.p-dropdown-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.p-dropdown-panel .p-dropdown-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container {
+  width: 100%;
+}
+
+.p-dropdown-panel .p-dropdown-filter {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+.p-dropdown-panel .p-dropdown-filter:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: none;
+}
+
+.p-dropdown-panel .p-dropdown-filter-icon {
+  color: var(--text-secondary);
+}
+
+.p-dropdown-panel .p-dropdown-items-wrapper,
+.p-dropdown-panel .p-dropdown-items {
+  background: var(--bg-surface);
+  padding: 4px 0;
+}
+
+.p-dropdown-panel .p-dropdown-item {
+  color: var(--text) !important;
+  background: transparent !important;
+  font-size: 13px;
+  padding: 8px 14px;
+  transition: background 0.1s;
+}
+
+.p-dropdown-panel .p-dropdown-item:not(.p-disabled):hover {
+  background: var(--bg-hover) !important;
+  color: var(--text) !important;
+}
+
+.p-dropdown-panel .p-dropdown-item.p-highlight {
+  background: var(--bg-hover) !important;
+  color: var(--accent) !important;
+  font-weight: 500;
+}
+
+.p-dropdown-panel .p-dropdown-item-group {
+  background: var(--bg-hover2);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px 4px;
+  cursor: default;
+}
+
+/* ── PrimeNG MultiSelect: trigger (inline) global styles ────────── */
+.p-multiselect {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  min-height: 38px !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s;
+}
+
+.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--text-secondary) !important;
+}
+
+.p-multiselect.p-focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent) !important;
+}
+
+.p-multiselect .p-multiselect-label {
+  color: var(--text) !important;
+  font-size: 13px !important;
+  padding: 8px 4px 8px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.p-multiselect .p-multiselect-label.p-placeholder {
+  color: var(--text-secondary) !important;
+}
+
+.p-multiselect .p-multiselect-trigger {
+  color: var(--text-secondary) !important;
+  width: 2rem !important;
+}
+
+.p-multiselect .p-multiselect-token {
+  background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
+  color: var(--accent) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 2px 8px !important;
+}
+
+/* ── PrimeNG MultiSelect: panel (overlay) global styles ─────────── */
+/* Panel is appended to <body> so component ::ng-deep cannot reach it */
+.p-multiselect-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.p-multiselect-panel .p-multiselect-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+}
+
+.p-multiselect-panel .p-multiselect-filter-container {
+  width: 100%;
+}
+
+.p-multiselect-panel .p-multiselect-filter {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+.p-multiselect-panel .p-multiselect-filter:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: none;
+}
+
+.p-multiselect-panel .p-multiselect-items-wrapper,
+.p-multiselect-panel .p-multiselect-items {
+  background: var(--bg-surface);
+  padding: 4px 0;
+}
+
+.p-multiselect-panel .p-multiselect-item {
+  color: var(--text) !important;
+  background: transparent !important;
+  font-size: 13px;
+  padding: 8px 14px;
+  transition: background 0.1s;
+}
+
+.p-multiselect-panel .p-multiselect-item:not(.p-disabled):hover {
+  background: var(--bg-hover) !important;
+  color: var(--text) !important;
+}
+
+.p-multiselect-panel .p-multiselect-item.p-highlight {
+  background: var(--bg-hover) !important;
+  color: var(--accent) !important;
+  font-weight: 500;
+}
+
+.p-multiselect-panel .p-multiselect-item .p-checkbox {
+  margin-right: 8px;
+}
+
+.p-multiselect-panel .p-checkbox .p-checkbox-box {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  transition: 0.15s;
+}
+
+.p-multiselect-panel .p-checkbox .p-checkbox-box.p-highlight {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px !important;
+  }
+
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .header-actions {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  /* Filter bar stacks vertically */
+  .filter-bar {
+    gap: 8px !important;
+  }
+
+  .filter-bar select,
+  .filter-bar input {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  /* Tables: horizontal scroll */
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table {
+    min-width: 540px;
+  }
+
+  /* Modals: full-width on small screens */
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+
+  .modal-overlay {
+    align-items: flex-end !important;
+  }
+
+  /* Form actions: stack */
+  .form-actions {
+    flex-direction: column-reverse !important;
+  }
+
+  .form-actions button {
+    width: 100% !important;
+  }
+}

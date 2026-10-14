@@ -1,0 +1,151 @@
+<div class="page" [class.governance-workspace]="workbench">
+  <ng-container *ngIf="!workbench; else workspace">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">API Standards</h1>
+      <p class="page-subtitle">Define standards and validate your APIs for compliance</p>
+    </div>
+    <button *appPermission="'governance.manage'" class="btn-primary" (click)="openForm()">+ New Standard</button>
+  </div>
+
+  <p *ngIf="structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+  <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+  <div class="filter-bar" *ngIf="!structuralOnly()">
+    <input class="filter-search" type="text" placeholder="Search standards..." [value]="search" (input)="onSearch($event)">
+  </div>
+
+  <app-loading *ngIf="loading()"></app-loading>
+
+  <div class="card-grid" *ngIf="!loading() && !errorKey()">
+    <div *ngIf="standards().length === 0" class="empty-state">
+      No standards defined yet. Create your first API standard to get started.
+    </div>
+
+    <div class="standard-card" *ngFor="let std of standards()">
+      <div class="card-header">
+        <div class="card-name">
+          {{ structuralOnly() ? std.id : std.name }}
+          <span class="badge" [class.badge-active]="std.isActive" [class.badge-inactive]="!std.isActive">
+            {{ std.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="card-actions">
+          <a [routerLink]="['/governance/standards', std.id]" class="btn-secondary btn-sm">Manage</a>
+          <button *appPermission="'governance.manage'" class="btn-ghost btn-sm" (click)="openForm(std)">Edit</button>
+          <button *appPermission="'governance.manage'" class="btn-danger btn-sm" (click)="delete(std.id)">Delete</button>
+        </div>
+      </div>
+      <p class="card-desc" *ngIf="!structuralOnly()">{{ std.description || '—' }}</p>
+      <div class="card-stats">
+        <span><strong>{{ std.ruleCount }}</strong> Rules</span>
+        <span><strong>{{ std.assignmentCount }}</strong> Assignments</span>
+        <span>Created {{ std.createdAt | date:'MMM d, y' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pagination" *ngIf="!loading() && totalPages > 1">
+    <button class="btn-secondary btn-sm" (click)="prev()" [disabled]="page === 1">← Prev</button>
+    <span>{{ page }} / {{ totalPages }}</span>
+    <button class="btn-secondary btn-sm" (click)="next()" [disabled]="page === totalPages">Next →</button>
+  </div>
+  </ng-container>
+
+  <ng-template #workspace>
+    <header class="gov-header">
+      <div>
+        <nav class="gov-breadcrumb" aria-label="Governance context">
+          <span>{{ structuralOnly() ? organization.activeOrganizationId() : organization.activeOrganization()?.name }}</span>
+          <span aria-hidden="true">/</span><span>{{ 'gov.title' | t }}</span>
+        </nav>
+        <h1>{{ 'gov.title' | t }}</h1>
+        <p>{{ 'gov.subtitle' | t }}</p>
+      </div>
+      <div class="gov-actions">
+        <button class="btn-secondary" (click)="load()">{{ 'gov.refresh' | t }}</button>
+        <button *ngIf="canManage()" class="btn-primary" (click)="openForm()">{{ 'gov.newStandard' | t }}</button>
+      </div>
+    </header>
+    <p class="gov-notice" *ngIf="structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+    <div class="gov-error" *ngIf="errorKey()" role="alert">
+      {{ errorKey()! | t }}
+      <button class="btn-secondary" (click)="load()">{{ 'gov.retry' | t }}</button>
+    </div>
+    <div class="gov-layout" *ngIf="!errorKey()">
+      <aside class="gov-explorer" [attr.aria-label]="'gov.explorer' | t">
+        <div class="gov-section-heading"><h2>{{ 'gov.explorer' | t }}</h2><span>{{ totalCount }}</span></div>
+        <label class="gov-search" *ngIf="!structuralOnly()">
+          <span class="pi pi-search" aria-hidden="true"></span>
+          <input type="search" [attr.aria-label]="'gov.search' | t" [placeholder]="'gov.search' | t" [value]="search" (input)="onSearch($event)">
+        </label>
+        <label class="gov-filter">{{ 'gov.status' | t }}
+          <select [value]="statusFilter === undefined ? '' : statusFilter" (change)="onStatusChange($event)">
+            <option value="">{{ 'gov.allStatuses' | t }}</option>
+            <option value="true">{{ 'gov.active' | t }}</option>
+            <option value="false">{{ 'gov.inactive' | t }}</option>
+          </select>
+        </label>
+        <div class="gov-explorer-label">{{ 'gov.standards' | t }}</div>
+        <nav class="gov-resource-list" [attr.aria-label]="'gov.standards' | t" *ngIf="!loading()">
+          <button *ngFor="let std of standards(); trackBy: trackStandard" class="gov-resource"
+            [class.selected]="selectedId() === std.id" [attr.aria-current]="selectedId() === std.id ? 'true' : null"
+            (click)="selectedId.set(std.id)">
+            <span class="pi pi-shield" aria-hidden="true"></span>
+            <span><strong>{{ structuralOnly() ? std.id : std.name }}</strong><small>{{ std.ruleCount }} {{ 'gov.rules' | t }} · {{ std.assignmentCount }} {{ 'gov.assignments' | t }}</small></span>
+            <i class="gov-status-dot" [class.off]="!std.isActive" [attr.title]="(std.isActive ? 'gov.active' : 'gov.inactive') | t"></i>
+          </button>
+        </nav>
+        <div class="gov-pagination" *ngIf="totalPages > 1">
+          <button class="btn-secondary" (click)="prev()" [disabled]="page === 1 || loading()" [attr.aria-label]="'gov.previous' | t">&lt;</button>
+          <span>{{ page }} / {{ totalPages }}</span>
+          <button class="btn-secondary" (click)="next()" [disabled]="page === totalPages || loading()" [attr.aria-label]="'gov.next' | t">&gt;</button>
+        </div>
+        <p class="gov-explorer-note">{{ 'gov.explorerNote' | t }}</p>
+      </aside>
+      <section class="gov-content" [attr.aria-label]="'gov.policyWorkspace' | t">
+        <div class="gov-state" *ngIf="loading()" role="status"><app-loading></app-loading>{{ 'gov.loading' | t }}</div>
+        <div class="gov-state" *ngIf="!loading() && !standards().length">
+          <span class="pi pi-shield" aria-hidden="true"></span><h2>{{ 'gov.emptyTitle' | t }}</h2><p>{{ 'gov.emptyText' | t }}</p>
+          <button *ngIf="canManage()" class="btn-primary" (click)="openForm()">{{ 'gov.newStandard' | t }}</button>
+        </div>
+        <ng-container *ngIf="!loading()">
+          <div *ngFor="let std of selectedStandards(); trackBy: trackStandard">
+            <div class="gov-resource-actions" *ngIf="canManage()">
+              <button class="btn-secondary" (click)="openForm(std)">{{ 'gov.editStandard' | t }}</button>
+              <button class="btn-ghost" (click)="delete(std.id)">{{ 'gov.deleteStandard' | t }}</button>
+            </div>
+            <app-governance-detail [sourceStandardId]="std.id" [embedded]="true" (standardChanged)="refreshList()"></app-governance-detail>
+          </div>
+        </ng-container>
+      </section>
+    </div>
+  </ng-template>
+
+  <!-- Create/Edit Modal -->
+  <div class="modal-overlay" [class.gov-drawer-overlay]="workbench" *ngIf="canManage() && showForm" (click)="closeForm()" (keydown.escape)="closeForm()">
+    <div class="modal" [class.gov-drawer]="workbench" role="dialog" aria-modal="true" aria-labelledby="standard-form-title" (click)="$event.stopPropagation()">
+      <h2 class="modal-title" id="standard-form-title">{{ editingId ? 'Edit Standard' : 'New Standard' }}</h2>
+      <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-group">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" formControlName="name" placeholder="e.g. REST API Standards v1">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Describe the purpose of this standard..."></textarea>
+        </div>
+        <div class="form-group form-check">
+          <input type="checkbox" formControlName="isActive" id="isActive">
+          <label for="isActive">Active (enabled for validation)</label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Saving...' : (editingId ? 'Update' : 'Create') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

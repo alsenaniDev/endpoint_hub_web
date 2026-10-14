@@ -1,0 +1,534 @@
+<div class="page" [class.workbench-explorer]="isWorkbench" [class.source-documentation]="documentationOnly"
+  [class.documentation-explorer-open]="showDocumentationExplorer">
+  <div class="page-header" *ngIf="!isWorkbench">
+    <div>
+      <h1 class="page-title">{{ 'endpoints.title' | t }}</h1>
+      <p class="page-subtitle">
+        <span class="subtitle-unique" *ngIf="!structuralOnly()">{{ uniqueEndpointCount() }} {{ 'endpoints.uniqueEndpoints' | t }}</span>
+        <span class="subtitle-total" *ngIf="structuralOnly()">{{ endpoints().length }}{{ hasMore() ? '+' : '' }} {{ 'endpoints.visibleRecords' | t }}</span>
+        <span class="subtitle-sep"> · </span>
+        <span class="subtitle-total"><ng-container *ngIf="!structuralOnly()">{{ endpoints().length }}{{ hasMore() ? '+' : '' }} {{ 'endpoints.totalAcrossEnvs' | t }} </ng-container>{{ systemGroups().length }} {{ systemGroups().length !== 1 ? ('endpoints.systems' | t) : ('endpoints.system' | t) }}</span>
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-sm-outline" (click)="expandAll()">{{ 'endpoints.expandAll' | t }}</button>
+      <button class="btn-sm-outline" (click)="collapseAll()">{{ 'endpoints.collapseAll' | t }}</button>
+      <button class="btn-fav-filter" [class.active]="favoritesOnly()" (click)="toggleFavoritesFilter()"
+        title="Show only my favorited endpoints">
+        {{ favoritesOnly() ? '★' : '☆' }}
+        {{ favoritesOnly() ? ' ' + ('endpoints.favoritesOnly' | t) : ('endpoints.favorites' | t) }}
+
+
+      </button>
+      <button class="btn-shared-filter" [class.active]="sharedWithMeOnly()" (click)="toggleSharedFilter()"
+        title="Show endpoints shared with you by others">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        {{ 'endpoints.sharedWithMe' | t }}
+      </button>
+      <button class="btn-new-sharing-filter" [class.active]="newSharingOnly()" (click)="toggleNewSharingFilter()"
+        *ngIf="sharedWithMeOnly()"
+        title="Show only newly shared endpoints">
+        ✦ New Sharing Only
+      </button>
+      <button *ngIf="canMutate()" class="btn-share" (click)="showSharePanel() ? showSharePanel.set(false) : openSharePanel()"
+        title="Share endpoints with another user or team">
+        {{ 'endpoints.shareFavorites' | t }}
+      </button>
+      <button *ngIf="canMutate()" class="btn-select-mode" [class.active]="selectionMode()" (click)="toggleSelectionMode()"
+        title="Select endpoints to share">
+        <svg class="select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline *ngIf="selectionMode()" points="20,6 9,17 4,12"/>
+          <rect *ngIf="!selectionMode()" x="3" y="3" width="18" height="18" rx="2"/>
+        </svg>
+        {{ selectionMode() ? 'Selecting' : 'Select' }}
+        <span class="select-count-badge" *ngIf="selectionMode() && selectedCount() > 0">{{ selectedCount() }}</span>
+      </button>
+      <button class="btn-share-selected" *ngIf="canMutate() && selectionMode() && selectedCount() > 0"
+        (click)="openSharePanelForSelected()" title="Share selected endpoints">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share {{ selectedCount() }} endpoint{{ selectedCount() !== 1 ? 's' : '' }}
+      </button>
+      <button *appPermission="'export.view'" [disabled]="structuralOnly()" class="btn-export" (click)="exportAll()" [title]="'endpoints.export' | t">{{ 'endpoints.export' | t
+        }}</button>
+    </div>
+  </div>
+
+  <!-- Share Panel -->
+  <div class="share-panel" *ngIf="canMutate() && showSharePanel()">
+    <div class="share-panel-header">
+      <div>
+        <span class="share-panel-title">{{ 'endpoints.shareTitle' | t }}</span>
+        <span class="share-panel-ep-label" *ngIf="shareEndpointLabel()"> — {{ shareEndpointLabel() }}</span>
+      </div>
+      <button class="share-close" (click)="showSharePanel.set(false)">✕</button>
+    </div>
+
+    <!-- Mode tabs -->
+    <div class="share-modes">
+      <button class="share-mode-btn" [class.active]="shareMode() === 'user'"
+        (click)="shareMode.set('user'); shareResult.set(null)">
+        {{ 'endpoints.share.modeUser' | t }}
+      </button>
+      <button class="share-mode-btn" [class.active]="shareMode() === 'my-team'" *ngIf="hasMembershipTeam()"
+        (click)="shareMode.set('my-team'); shareResult.set(null)">
+        {{ 'endpoints.share.modeMyTeam' | t }}
+      </button>
+      <button class="share-mode-btn" [class.active]="shareMode() === 'teams'" *ngIf="canSelectTeams()"
+        (click)="shareMode.set('teams'); shareResult.set(null)">
+        {{ 'endpoints.share.modeTeams' | t }}
+      </button>
+    </div>
+
+    <!-- Mode: share with a single user -->
+    <ng-container *ngIf="shareMode() === 'user'">
+      <p class="share-hint">{{ 'endpoints.share.hintUser' | t }}</p>
+      <div class="share-row">
+        <input class="share-input" type="text" [placeholder]="'endpoints.share.userPlaceholder' | t"
+          [(ngModel)]="shareTarget" (keydown.enter)="doShare()">
+        <button class="btn-do-share" [disabled]="sharing() || !shareTarget.trim()" (click)="doShare()">
+          <span *ngIf="!sharing()">{{ 'endpoints.shareBtn' | t }}</span>
+          <span *ngIf="sharing()">{{ 'endpoints.sharing' | t }}</span>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Mode: share with membership team -->
+    <ng-container *ngIf="shareMode() === 'my-team'">
+      <p class="share-hint">{{ 'endpoints.share.hintMyTeam' | t }}</p>
+      <div class="share-row">
+        <button class="btn-do-share" [disabled]="sharing()" (click)="doShare()">
+          <span *ngIf="!sharing()">{{ 'endpoints.share.shareWithMyTeam' | t }}</span>
+          <span *ngIf="sharing()">{{ 'endpoints.sharing' | t }}</span>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Mode: share with teams in the active organization -->
+    <ng-container *ngIf="shareMode() === 'teams'">
+      <p class="share-hint">{{ 'endpoints.share.hintTeams' | t }}</p>
+      <div class="share-row share-row-gap">
+        <p-multiSelect class="share-multiselect" [options]="shareTeams()" [(ngModel)]="shareTeamIds" optionLabel="name"
+          optionValue="id" [placeholder]="'endpoints.share.selectTeams' | t" [filter]="true"
+          filterPlaceHolder="Search teams…">
+        </p-multiSelect>
+        <button class="btn-do-share" [disabled]="sharing() || !shareTeamIds.length" (click)="doShare()">
+          <span *ngIf="!sharing()">{{ 'endpoints.shareBtn' | t }}</span>
+          <span *ngIf="sharing()">{{ 'endpoints.sharing' | t }}</span>
+        </button>
+      </div>
+    </ng-container>
+
+    <div class="share-result" *ngIf="shareResult()" [class.share-ok]="shareResult()!.ok"
+      [class.share-err]="!shareResult()!.ok">
+      {{ shareResult()!.msg }}
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isWorkbench">
+  <!-- Filters -->
+  <div class="filter-bar">
+
+    <!-- System filter — always visible; selecting one reveals the environment dropdown -->
+    <p-dropdown
+      [options]="systemOptions()"
+      [ngModel]="selectedSystemId()"
+      (ngModelChange)="onSystemChanged($event)"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterPlaceHolder="Search systems…"
+      [showClear]="true"
+      [placeholder]="'endpoints.allSystems' | t"
+      styleClass="filter-dropdown">
+    </p-dropdown>
+
+    <!-- Environment — flat list for the selected system; hidden until a system is chosen -->
+    <p-dropdown
+      *ngIf="selectedSystemId() !== null"
+      [options]="envOptions()"
+      [(ngModel)]="selectedEnvId"
+      (ngModelChange)="onEnvChanged($event)"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterPlaceHolder="Search environments…"
+      [showClear]="true"
+      [placeholder]="'endpoints.allEnvs' | t"
+      styleClass="filter-dropdown">
+    </p-dropdown>
+
+    <!-- Swagger source / version (only when an env with multiple sources is selected) -->
+    <p-dropdown
+      *ngIf="swaggerSources().length > 0"
+      [options]="sourceOptions()"
+      [(ngModel)]="selectedSourceId"
+      (ngModelChange)="onSourceChanged($event)"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterPlaceHolder="Search versions…"
+      [showClear]="true"
+      [placeholder]="'endpoints.allVersions' | t"
+      styleClass="filter-dropdown">
+    </p-dropdown>
+
+    <!-- HTTP Method -->
+    <p-dropdown
+      [options]="methodOptions"
+      [(ngModel)]="selectedMethod"
+      (ngModelChange)="onMethodChanged($event)"
+      optionLabel="label"
+      optionValue="value"
+      [showClear]="true"
+      [placeholder]="'endpoints.allMethods' | t"
+      styleClass="filter-dropdown">
+    </p-dropdown>
+
+    <!-- Tag (only when an environment is selected and tags are available) -->
+    <p-dropdown
+      *ngIf="!structuralOnly() && tags().length > 0"
+      [options]="tagOptions()"
+      [(ngModel)]="selectedTag"
+      (ngModelChange)="onTagChanged($event)"
+      optionLabel="label"
+      optionValue="value"
+      [filter]="true"
+      filterPlaceHolder="Search tags…"
+      [showClear]="true"
+      [placeholder]="'endpoints.allTags' | t"
+      styleClass="filter-dropdown">
+    </p-dropdown>
+
+    <!-- Change status -->
+    <p-dropdown
+      [options]="changeOptions"
+      [(ngModel)]="selectedChangeStatus"
+      (ngModelChange)="onChangeStatusChanged($event)"
+      optionLabel="label"
+      optionValue="value"
+      [showClear]="true"
+      [placeholder]="'endpoints.allChanges' | t"
+      styleClass="filter-dropdown">
+    </p-dropdown>
+
+    <!-- Free-text search -->
+    <input type="text" [disabled]="structuralOnly()" [placeholder]="'endpoints.searchPlaceholder' | t" (input)="onSearch($event)"
+      style="flex:1; min-width: 200px">
+  </div>
+    </ng-container>
+
+    <ng-container *ngIf="isWorkbench">
+      <div class="endpoint-workspace">
+        <aside class="explorer-pane" [attr.aria-label]="'workspace.explorer' | t">
+          <header class="explorer-heading">
+            <h1>{{ 'workspace.explorer' | t }}</h1>
+            <details class="context-menu">
+              <summary [attr.aria-label]="'workspace.explorerActions' | t"><i class="pi pi-ellipsis-h" aria-hidden="true"></i></summary>
+              <div class="menu-items">
+                <button (click)="expandAll()">{{ 'endpoints.expandAll' | t }}</button>
+                <button (click)="collapseAll()">{{ 'endpoints.collapseAll' | t }}</button>
+                <button *ngIf="canMutate()" (click)="toggleSelectionMode()">{{ 'workspace.selectEndpoints' | t }}</button>
+                <button *ngIf="canMutate()" (click)="openSharePanel()">{{ 'endpoints.shareFavorites' | t }}</button>
+                <button *ngIf="canExport()" (click)="exportAll()">{{ 'endpoints.export' | t }}</button>
+              </div>
+            </details>
+          </header>
+
+          <div class="explorer-search">
+            <i class="pi pi-search" aria-hidden="true"></i>
+            <input *ngIf="!structuralOnly()" type="search" [attr.aria-label]="'endpoints.searchPlaceholder' | t"
+              [placeholder]="'workspace.search' | t" (input)="onSearch($event)">
+            <span *ngIf="structuralOnly()">{{ 'org.structuralOnly' | t }}</span>
+            <button *ngIf="!documentationOnly" class="icon-button" [class.is-active]="showFilters()" [attr.aria-label]="'workspace.filters' | t"
+              [attr.aria-expanded]="showFilters()" (click)="showFilters.update(toggleBoolean)">
+              <i class="pi pi-filter" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <section class="explorer-filters" *ngIf="showFilters()" [attr.aria-label]="'workspace.filters' | t">
+            <label>{{ 'workspace.system' | t }}
+              <select [ngModel]="selectedSystemId()" (ngModelChange)="onSystemChanged($event)">
+                <option [ngValue]="null">{{ 'endpoints.allSystems' | t }}</option>
+                <option *ngFor="let option of systemOptions()" [ngValue]="option.value">{{ option.label }}</option>
+              </select>
+            </label>
+            <label *ngIf="selectedSystemId()">{{ 'workspace.environment' | t }}
+              <select [(ngModel)]="selectedEnvId" (ngModelChange)="onEnvChanged($event)">
+                <option [ngValue]="null">{{ 'endpoints.allEnvs' | t }}</option>
+                <option *ngFor="let env of environments()" [hidden]="env.systemId !== selectedSystemId()" [ngValue]="env.id">
+                  {{ structuralOnly() ? env.id : env.name }}
+                </option>
+              </select>
+            </label>
+            <label *ngIf="sourceOptions().length">{{ 'workspace.source' | t }}
+              <select [(ngModel)]="selectedSourceId" (ngModelChange)="onSourceChanged($event)">
+                <option [ngValue]="null">{{ 'endpoints.allVersions' | t }}</option>
+                <option *ngFor="let option of sourceOptions()" [ngValue]="option.value">{{ option.label }}</option>
+              </select>
+            </label>
+            <label>{{ 'workspace.method' | t }}
+              <select [(ngModel)]="selectedMethod" (ngModelChange)="onMethodChanged($event)">
+                <option [ngValue]="null">{{ 'endpoints.allMethods' | t }}</option>
+                <option *ngFor="let method of methods" [ngValue]="method">{{ method }}</option>
+              </select>
+            </label>
+            <label *ngIf="!structuralOnly() && tags().length">{{ 'workspace.controller' | t }}
+              <select [(ngModel)]="selectedTag" (ngModelChange)="onTagChanged($event)">
+                <option [ngValue]="null">{{ 'endpoints.allTags' | t }}</option>
+                <option *ngFor="let tag of tags()" [ngValue]="tag">{{ tag }}</option>
+              </select>
+            </label>
+            <label>{{ 'workspace.changes' | t }}
+              <select [(ngModel)]="selectedChangeStatus" (ngModelChange)="onChangeStatusChanged($event)">
+                <option [ngValue]="null">{{ 'endpoints.allChanges' | t }}</option>
+                <option *ngFor="let option of changeOptions" [ngValue]="option.value">{{ option.label }}</option>
+              </select>
+            </label>
+          </section>
+
+          <nav class="explorer-views" [attr.aria-label]="'workspace.collections' | t">
+            <button [class.is-active]="!favoritesOnly() && !sharedWithMeOnly()"
+              (click)="favoritesOnly() ? toggleFavoritesFilter() : (sharedWithMeOnly() ? toggleSharedFilter() : null)">{{ 'workspace.allResources' | t }}</button>
+            <button [class.is-active]="favoritesOnly()" (click)="toggleFavoritesFilter()">{{ 'endpoints.favorites' | t }}</button>
+            <button [class.is-active]="sharedWithMeOnly()" (click)="toggleSharedFilter()">{{ 'endpoints.sharedWithMe' | t }}</button>
+          </nav>
+          <button *ngIf="sharedWithMeOnly()" class="sharing-filter" [class.is-active]="newSharingOnly()"
+            (click)="toggleNewSharingFilter()">{{ 'workspace.newSharing' | t }}</button>
+
+          <div class="explorer-context">
+            <span>{{ 'workspace.resourceHierarchy' | t }}</span>
+            <span>{{ endpoints().length }}{{ hasMore() ? '+' : '' }} / {{ total() }}</span>
+          </div>
+          <div *ngIf="selectionMode() && canMutate()" class="selection-context">
+            <span>{{ selectedCount() }} {{ 'workspace.selected' | t }}</span>
+            <button [disabled]="!selectedCount()" (click)="openSharePanelForSelected()">{{ 'endpoints.share' | t }}</button>
+            <button (click)="toggleSelectionMode()" [attr.aria-label]="'common.cancel' | t"><i class="pi pi-times" aria-hidden="true"></i></button>
+          </div>
+
+          <div class="resource-scroll" [attr.aria-busy]="loading()">
+            <app-loading [loading]="loading()"></app-loading>
+            <nav *ngIf="!errorKey()" class="resource-navigation" [attr.aria-label]="'workspace.resources' | t">
+              <section *ngFor="let group of systemGroups()" class="resource-system">
+                <div class="resource-group-heading">
+                  <button class="resource-system-button" (click)="toggleSystem(group.systemId)" [attr.aria-expanded]="isExpanded(group.systemId)">
+                    <i [class]="isExpanded(group.systemId) ? 'pi pi-angle-down' : 'pi pi-angle-right'" aria-hidden="true"></i>
+                    <i class="pi pi-box" aria-hidden="true"></i>
+                    <span>{{ structuralOnly() ? group.systemId : group.systemName }}</span><small>{{ group.totalEndpoints }}</small>
+                  </button>
+                  <button *ngIf="canExport()" class="icon-button"
+                    [attr.aria-label]="'endpoints.export' | t" (click)="exportSystem(group)"><i class="pi pi-download" aria-hidden="true"></i></button>
+                </div>
+                <ng-container *ngIf="isExpanded(group.systemId)">
+                  <section *ngFor="let env of group.envGroups" class="resource-environment">
+                    <div class="resource-environment-heading"><i class="pi pi-globe" aria-hidden="true"></i>
+                      <span>{{ structuralOnly() ? env.envId : env.envName }}</span><small>{{ env.totalEndpoints }}</small>
+                    </div>
+                    <section *ngFor="let controller of env.tagGroups" class="resource-controller">
+                      <div class="resource-group-heading">
+                        <button (click)="toggleTag(group.systemId, env.envId, controller.tag)"
+                          [attr.aria-expanded]="isTagExpanded(group.systemId, env.envId, controller.tag)">
+                          <i [class]="isTagExpanded(group.systemId, env.envId, controller.tag) ? 'pi pi-angle-down' : 'pi pi-angle-right'" aria-hidden="true"></i>
+                          <span>{{ structuralOnly() ? ('workspace.controller' | t) : controller.tag }}</span><small>{{ controller.endpoints.length }}</small>
+                        </button>
+                        <button *ngIf="canExport()" class="icon-button"
+                          [attr.aria-label]="'endpoints.export' | t" (click)="exportTag(group, env, controller)"><i class="pi pi-download" aria-hidden="true"></i></button>
+                      </div>
+                      <div *ngIf="isTagExpanded(group.systemId, env.envId, controller.tag)">
+                        <div *ngFor="let ep of controller.endpoints; trackBy: trackEndpoint" class="resource-endpoint-row"
+                          [class.is-active]="activeEndpoint()?.id === ep.id" [class.is-selected]="isSelected(ep.id)">
+                          <input *ngIf="canMutate() && selectionMode()" type="checkbox" [checked]="isSelected(ep.id)"
+                            [attr.aria-label]="('workspace.selectEndpoint' | t) + ' ' + ep.id" (change)="toggleSelection(ep, $event)">
+                          <button class="resource-endpoint-button" (click)="selectEndpoint(ep)" [attr.aria-current]="activeEndpoint()?.id === ep.id ? 'true' : null">
+                            <span class="resource-method" [attr.data-method]="ep.method">{{ ep.method }}</span>
+                            <code>{{ structuralOnly() ? ep.id : ep.path }}</code>
+                            <i *ngIf="ep.isFavorite && !structuralOnly()" class="pi pi-star-fill" aria-hidden="true"></i>
+                            <span *ngIf="ep.isNew && !structuralOnly()" class="new-dot" [title]="'workspace.newSharing' | t"></span>
+                          </button>
+                        </div>
+                      </div>
+                    </section>
+                  </section>
+                </ng-container>
+              </section>
+            </nav>
+            <p *ngIf="!loading() && !errorKey() && !systemGroups().length" class="explorer-empty">{{ 'endpoints.noEndpoints' | t }}</p>
+          </div>
+          <footer class="explorer-footer">
+            <span>{{ systemGroups().length }} {{ 'endpoints.systems' | t }}<br>
+              <ng-container *ngIf="!structuralOnly()">{{ uniqueEndpointCount() }} {{ 'endpoints.uniqueEndpoints' | t }}</ng-container>
+            </span>
+            <button *ngIf="hasMore()" [disabled]="loading()" (click)="loadMore()">{{ 'endpoints.loadMore' | t }}</button>
+          </footer>
+        </aside>
+
+        <main class="selected-workspace">
+          <div *ngIf="errorKey()" class="workspace-state error-state" role="alert">
+            <i class="pi pi-lock" aria-hidden="true"></i><h2>{{ errorKey()! | t }}</h2>
+            <p>{{ 'workspace.readFailed' | t }}</p>
+          </div>
+          <div *ngIf="structuralOnly()" class="structural-notice" role="note"><i class="pi pi-lock" aria-hidden="true"></i>{{ 'org.structuralOnly' | t }}</div>
+          <ng-container *ngIf="!errorKey()">
+            <ng-container *ngFor="let ep of workspaceEndpoints(); trackBy: trackEndpoint">
+              <header class="selected-resource-header">
+                <div class="resource-breadcrumb">
+                  <span>{{ structuralOnly() ? ep.systemId : ep.systemName }}</span><i class="pi pi-angle-right" aria-hidden="true"></i>
+                  <span>{{ structuralOnly() ? ep.environmentId : ep.environmentName }}</span>
+                  <ng-container *ngIf="!structuralOnly() && ep.tag"><i class="pi pi-angle-right" aria-hidden="true"></i><span>{{ ep.tag }}</span></ng-container>
+                </div>
+                <div class="selected-resource-title">
+                  <app-method-badge [method]="ep.method"></app-method-badge><h2>{{ structuralOnly() ? ep.id : ep.path }}</h2>
+                  <span *ngIf="ep.isDeprecated" class="resource-status">{{ 'endpoints.deprecated' | t }}</span>
+                  <span *ngIf="ep.changeStatus !== 'Unchanged'" class="resource-status" [style.color]="getChangeColor(ep.changeStatus)">{{ ep.changeStatus }}</span>
+                  <a class="open-resource" [routerLink]="detailRoute(ep.id)"><i class="pi pi-external-link" aria-hidden="true"></i>{{ 'workspace.openEndpoint' | t }}</a>
+                </div>
+                <p *ngIf="!structuralOnly() && ep.summary" class="resource-description">{{ ep.summary }}</p>
+                <div class="workspace-navigation">
+                  <div class="workspace-tabs" role="tablist" [attr.aria-label]="'workspace.endpointWorkspace' | t">
+                    <button role="tab" [attr.aria-selected]="workspaceTab() === 'details'" [class.is-active]="workspaceTab() === 'details'"
+                      (click)="workspaceTab.set('details')">{{ 'workspace.documentation' | t }}</button>
+                    <button *ngIf="canRun()" role="tab" [attr.aria-selected]="workspaceTab() === 'request'" [class.is-active]="workspaceTab() === 'request'"
+                      (click)="workspaceTab.set('request')">{{ 'runner.testingWorkspace' | t }}</button>
+                    <button *ngIf="!canRun() && !documentationOnly" role="tab" [attr.aria-selected]="false" disabled [title]="'workspace.executionUnavailable' | t">
+                      <i class="pi pi-lock" aria-hidden="true"></i> {{ 'runner.testingWorkspace' | t }}
+                    </button>
+                  </div>
+                  <div class="resource-actions">
+                    <button *ngIf="canMutate() && !sharedWithMeOnly()" [class.is-active]="ep.isFavorite" (click)="onToggleFavorite(ep)"
+                      [attr.aria-label]="'endpoints.favorites' | t"><i [class]="ep.isFavorite ? 'pi pi-star-fill' : 'pi pi-star'" aria-hidden="true"></i></button>
+                    <details class="context-menu">
+                      <summary [attr.aria-label]="'workspace.endpointActions' | t"><i class="pi pi-ellipsis-h" aria-hidden="true"></i></summary>
+                      <div class="menu-items">
+                        <button *ngIf="!structuralOnly()" (click)="copyEndpoint(ep)">{{ (copiedId() === ep.id ? 'endpoints.copied' : 'endpoints.copy') | t }}</button>
+                        <button *ngIf="canMutate()" (click)="openSharePanelForEndpoint(ep)">{{ 'endpoints.share' | t }}</button>
+                        <button *ngIf="canMutate() && sharedWithMeOnly()" (click)="removeShared(ep)">{{ 'endpoints.removeShared' | t }}</button>
+                        <button *ngIf="canExport()" (click)="exportEndpoint(ep)">{{ 'common.export' | t }}</button>
+                        <a [routerLink]="detailRoute(ep.id)">{{ 'workspace.openEndpoint' | t }}</a>
+                        <a *ngIf="canRun()" [routerLink]="runRoute(ep.id)">{{ 'endpoints.detail.runRequest' | t }}</a>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              </header>
+              <div class="workspace-content">
+                <app-endpoint-detail *ngIf="workspaceTab() === 'details' || !canRun()" [resourceId]="ep.id" [embedded]="true"
+                  [compactDocumentation]="documentationOnly" [isWorkbench]="true"></app-endpoint-detail>
+                <app-endpoint-runner *ngIf="canRun()" [hidden]="workspaceTab() !== 'request'" [resourceId]="ep.id" [embedded]="true" [isWorkbench]="true"></app-endpoint-runner>
+              </div>
+            </ng-container>
+            <div *ngIf="!activeEndpoint()" class="workspace-state">
+              <i class="pi pi-code" aria-hidden="true"></i><h2>{{ 'workspace.endpointWorkspace' | t }}</h2>
+              <p>{{ (loading() ? 'workspace.loading' : 'workspace.selectHint') | t }}</p>
+            </div>
+          </ng-container>
+        </main>
+      </div>
+    </ng-container>
+
+  <ng-container *ngIf="!isWorkbench">
+  <app-loading [loading]="loading()"></app-loading>
+  <p *ngIf="structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+  <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+
+  <div *ngIf="!loading() && !errorKey()">
+    <!-- System Accordions -->
+    <div *ngFor="let group of systemGroups()" class="accordion">
+      <button class="accordion-header" (click)="toggleSystem(group.systemId)">
+        <span class="accordion-arrow">{{ isExpanded(group.systemId) ? '▼' : '▶' }}</span>
+        <span class="system-name">{{ group.systemName }}</span>
+        <code *ngIf="structuralOnly()">{{ group.systemId }}</code>
+        <span class="system-count">{{ group.totalEndpoints }} endpoint{{ group.totalEndpoints !== 1 ? 's' : '' }}</span>
+        <span class="tag-count" *ngIf="group.envCount === 1">{{ group.envGroups[0].tagGroups.length }} controller{{
+          group.envGroups[0].tagGroups.length !== 1 ? 's' : '' }}</span>
+        <span class="tag-count env-count" *ngIf="group.envCount > 1">{{ group.envCount }} environments</span>
+        <span class="change-badge new" *ngIf="group.newCount > 0">+{{ group.newCount }} new</span>
+        <span class="change-badge modified" *ngIf="group.modifiedCount > 0">~{{ group.modifiedCount }} modified</span>
+        <span class="change-badge deleted" *ngIf="group.deletedCount > 0">-{{ group.deletedCount }} deleted</span>
+        <span class="change-badge new-sharing" *ngIf="sharedWithMeOnly() && group.newSharingCount > 0">✦ {{ group.newSharingCount }} new sharing</span>
+        <button *appPermission="'export.view'" [disabled]="structuralOnly()" class="btn-export-icon" (click)="$event.stopPropagation(); exportSystem(group)"
+          title="Export {{ group.systemName }} documentation">Export Docs</button>
+      </button>
+      <div class="accordion-body" *ngIf="isExpanded(group.systemId)">
+        <ng-container *ngFor="let eg of group.envGroups">
+          <!-- Env divider: only shown when system has more than one environment -->
+          <div class="env-divider" *ngIf="group.envCount > 1">
+            <span class="env-dot">◈</span>
+            <span class="env-divider-name">{{ eg.envName }}</span>
+            <code *ngIf="structuralOnly()">{{ eg.envId }}</code>
+            <span class="env-ep-count">{{ eg.totalEndpoints }} endpoint{{ eg.totalEndpoints !== 1 ? 's' : '' }}</span>
+            <span class="change-badge new" *ngIf="eg.newCount > 0">+{{ eg.newCount }} new</span>
+            <span class="change-badge modified" *ngIf="eg.modifiedCount > 0">~{{ eg.modifiedCount }} modified</span>
+            <span class="change-badge deleted" *ngIf="eg.deletedCount > 0">-{{ eg.deletedCount }} deleted</span>
+          </div>
+          <!-- Controller (Tag) Sub-Accordions -->
+          <div *ngFor="let tg of eg.tagGroups" class="sub-accordion" [class.env-indented]="group.envCount > 1">
+            <button class="sub-accordion-header" (click)="toggleTag(group.systemId, eg.envId, tg.tag)">
+              <span class="accordion-arrow">{{ isTagExpanded(group.systemId, eg.envId, tg.tag) ? '▼' : '▶' }}</span>
+              <span class="tag-icon">⬡</span>
+              <span class="tag-name">{{ tg.tag }}</span>
+              <span class="tag-ep-count">{{ tg.endpoints.length }}</span>
+              <span class="change-badge fav" *ngIf="tg.favoriteCount > 0">★ {{ tg.favoriteCount }}</span>
+              <span class="change-badge new" *ngIf="tg.newCount > 0">+{{ tg.newCount }} new</span>
+              <span class="change-badge modified" *ngIf="tg.modifiedCount > 0">~{{ tg.modifiedCount }} modified</span>
+              <span class="change-badge deleted" *ngIf="tg.deletedCount > 0">-{{ tg.deletedCount }} deleted</span>
+              <span class="change-badge new-sharing" *ngIf="sharedWithMeOnly() && tg.newSharingCount > 0">✦ {{ tg.newSharingCount }} new sharing</span>
+              <button *appPermission="'export.view'" [disabled]="structuralOnly()" class="btn-export-icon" (click)="$event.stopPropagation(); exportTag(group, eg, tg)"
+                title="Export {{ tg.tag }} controller documentation">Export Docs</button>
+            </button>
+            <div class="sub-accordion-body" *ngIf="isTagExpanded(group.systemId, eg.envId, tg.tag)">
+              <a *ngFor="let ep of tg.endpoints" [routerLink]="canMutate() && selectionMode() ? null : detailRoute(ep.id)"
+                class="endpoint-row" [class.ep-fav]="ep.isFavorite" [class.ep-shared]="ep.isShared"
+                [class.ep-selected]="selectionMode() && isSelected(ep.id)"
+                (click)="canMutate() && selectionMode() ? toggleSelection(ep, $event) : null">
+                <span class="ep-checkbox" *ngIf="canMutate() && selectionMode()">{{ isSelected(ep.id) ? '☑' : '☐' }}</span>
+                <!-- Star / favorite toggle (hidden in shared-with-me view) -->
+                <button class="btn-star" [class.starred]="ep.isFavorite"
+                  *ngIf="canMutate() && !sharedWithMeOnly()"
+                  (click)="$event.preventDefault(); $event.stopPropagation(); onToggleFavorite(ep)"
+                  [title]="ep.isFavorite ? 'Remove from favorites' : 'Add to favorites'">
+                  {{ ep.isFavorite ? '★' : '☆' }}
+                </button>
+                <app-method-badge [method]="ep.method"></app-method-badge>
+                <span class="ep-new-badge" *ngIf="ep.isNew">New Sharing</span>
+                <div class="ep-path">{{ ep.path }}</div>
+                <code *ngIf="structuralOnly()">{{ ep.id }}</code>
+                <div class="ep-summary">{{ ep.summary }}</div>
+                <div class="ep-change" *ngIf="ep.changeStatus !== 'Unchanged'"
+                  [style.color]="getChangeColor(ep.changeStatus)">
+                  {{ ep.changeStatus }}
+                </div>
+                <div class="ep-deprecated" *ngIf="ep.isDeprecated">{{ 'endpoints.deprecated' | t }}</div>
+                <button *ngIf="!structuralOnly()" class="btn-ep-action"
+                  (click)="$event.preventDefault(); $event.stopPropagation(); copyEndpoint(ep)"
+                  [class.copied]="copiedId() === ep.id">{{ copiedId() === ep.id ? ('endpoints.copied' | t) :
+                  ('endpoints.copy' | t) }}</button>
+                <button *ngIf="canMutate()" class="btn-ep-action btn-ep-share"
+                  (click)="$event.preventDefault(); $event.stopPropagation(); openSharePanelForEndpoint(ep)"
+                  title="Share this endpoint">{{ 'endpoints.share' | t }}</button>
+                <button *appPermission="'export.view'" [disabled]="structuralOnly()" class="btn-ep-action btn-ep-export"
+                  (click)="$event.preventDefault(); $event.stopPropagation(); exportEndpoint(ep)">{{ 'common.export' | t
+                  }}</button>
+                <!-- Remove button only in Shared with Me view -->
+                <button class="btn-ep-action btn-ep-remove"
+                  *ngIf="canMutate() && sharedWithMeOnly()"
+                  (click)="$event.preventDefault(); $event.stopPropagation(); removeShared(ep)"
+                  title="Remove from Shared with Me">{{ 'endpoints.removeShared' | t }}</button>
+              </a>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div *ngIf="!endpoints().length" class="empty-state">
+      {{ 'endpoints.noEndpoints' | t }}
+    </div>
+
+    <!-- Load More (only shown when results were capped) -->
+    <div *ngIf="hasMore()" class="load-more-bar">
+      <span class="load-more-hint">Showing first {{ endpoints().length }} endpoints — refine your filters or load
+        more</span>
+      <button class="btn-load-more" [disabled]="loading()" (click)="loadMore()">{{ 'endpoints.loadMore' | t }}</button>
+    </div>
+  </div>
+  </ng-container>
+</div>

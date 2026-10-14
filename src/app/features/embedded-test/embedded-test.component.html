@@ -1,0 +1,316 @@
+<div class="page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-icon-wrap">🔬</div>
+      <div>
+        <h1 class="page-title">{{ 'embeddedTest.title' | t }}</h1>
+        <p class="page-subtitle">{{ 'embeddedTest.subtitle' | t }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="two-col-layout">
+
+    <!-- LEFT: Saved Tests -->
+    <div class="section-card saved-tests-card">
+      <div class="card-section-title-row">
+        <span class="card-section-title">{{ 'embeddedTest.savedTests' | t }}</span>
+        <button type="button" class="btn-save-test" (click)="startSave()" *ngIf="!savingName() && auth.hasPermission('endpoints.run')">
+          💾 {{ 'embeddedTest.saveTest' | t }}
+        </button>
+      </div>
+
+      <!-- Inline save-name row -->
+      <div class="save-name-row" *ngIf="savingName()">
+        <input type="text" class="save-name-input" [value]="saveNameValue()"
+          (input)="saveNameValue.set($any($event.target).value)" [placeholder]="'embeddedTest.saveNamePlaceholder' | t"
+          (keyup.enter)="confirmSave()" (keyup.escape)="cancelSave()" autofocus>
+        <button type="button" class="btn-confirm-save" (click)="confirmSave()"
+          [disabled]="!saveNameValue().trim() || savingApi()">
+          <span *ngIf="!savingApi()">{{ editingTestId() ? ('embeddedTest.confirmUpdate' | t) : ('embeddedTest.confirmSave' | t) }}</span>
+          <span *ngIf="savingApi()">…</span>
+        </button>
+        <button type="button" class="btn-cancel-save" (click)="cancelSave()" [disabled]="savingApi()">
+          {{ 'embeddedTest.cancelSave' | t }}
+        </button>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div class="saved-tests-loading" *ngIf="testsLoading()">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3]"></div>
+      </div>
+
+      <!-- List -->
+      <div class="saved-tests-list" *ngIf="!testsLoading() && savedTests().length > 0">
+        <div class="saved-test-item" *ngFor="let st of savedTests()">
+          <span class="saved-test-method" [attr.data-method]="st.method">{{ st.method }}</span>
+          <div class="saved-test-info">
+            <span class="saved-test-name">{{ st.name }}</span>
+            <span class="saved-test-url">{{ st.url }}</span>
+          </div>
+          <div class="saved-test-actions">
+            <button type="button" class="btn-load-test" (click)="loadTest(st)">
+              {{ 'embeddedTest.loadTest' | t }}
+            </button>
+            <button type="button" class="btn-load-test" (click)="startEdit(st)">
+              {{ 'embeddedTest.editTest' | t }}
+            </button>
+            <button type="button" class="btn-delete-test" *ngIf="auth.hasPermission('endpoints.run')" (click)="deleteTest(st.id)"
+              [title]="'embeddedTest.deleteTest' | t">×</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="saved-tests-empty" *ngIf="!testsLoading() && savedTests().length === 0 && !savingName()">
+        {{ 'embeddedTest.noSavedTests' | t }}
+      </div>
+    </div>
+
+    <!-- RIGHT: Request form + Response -->
+    <div class="right-col">
+
+      <!-- ── Step 1: Get Token ──────────────────────────────── -->
+      <div class="section-card get-token-card">
+        <div class="get-token-header" *ngIf="auth.hasPermission('authprofiles.view')" (click)="toggleTokenPanel()">
+          <div class="get-token-header-left">
+            <span class="get-token-step-badge">Step 1</span>
+            <span class="get-token-title">{{ 'embeddedTest.getToken.title' | t }}</span>
+            <span class="get-token-subtitle">{{ 'embeddedTest.getToken.subtitle' | t }}</span>
+          </div>
+          <span class="get-token-chevron" [class.open]="tokenPanelOpen()">▼</span>
+        </div>
+
+        <div class="get-token-body" *ngIf="tokenPanelOpen()">
+
+          <!-- Row 1: method + token URL -->
+          <div class="get-token-row">
+            <div class="get-token-field get-token-profile">
+              <label class="field-label">{{ 'embeddedTest.getToken.authProfile' | t }}</label>
+              <p-dropdown
+                [options]="authProfiles()"
+                optionLabel="name"
+                optionValue="id"
+                [ngModel]="selectedProfileId()"
+                (ngModelChange)="selectedProfileId.set($event)"
+                [placeholder]="'embeddedTest.getToken.selectProfile' | t"
+                [disabled]="profilesLoading()"
+                styleClass="get-token-dropdown">
+              </p-dropdown>
+              <span class="field-loading" *ngIf="profilesLoading()">{{ 'embeddedTest.getToken.loadingProfiles' | t }}</span>
+            </div>
+            <div class="get-token-field get-token-method-wrap">
+              <label class="field-label">{{ 'embeddedTest.getToken.method' | t }}</label>
+              <p-dropdown
+                [options]="methodOptions"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="tokenMethod()"
+                (ngModelChange)="tokenMethod.set($event)"
+                styleClass="get-token-method-dropdown">
+              </p-dropdown>
+            </div>
+            <div class="get-token-field get-token-url-wrap">
+              <label class="field-label">{{ 'embeddedTest.getToken.tokenUrl' | t }}</label>
+              <input type="text" class="url-input"
+                [value]="tokenUrl()"
+                (input)="tokenUrl.set($any($event.target).value)"
+                [placeholder]="'embeddedTest.getToken.tokenUrlPlaceholder' | t">
+            </div>
+          </div>
+
+          <!-- Row 2: body params (POST / PUT / PATCH only) -->
+          <div class="get-token-field token-params-section" *ngIf="tokenHasBody">
+            <div class="token-params-label-row">
+              <label class="field-label">
+                {{ 'embeddedTest.getToken.body' | t }}
+                <span class="field-badge optional">{{ 'embeddedTest.bodyOptional' | t }}</span>
+              </label>
+              <button type="button" class="btn-add-param" (click)="addTokenBodyParam()">
+                + {{ 'embeddedTest.getToken.addParam' | t }}
+              </button>
+            </div>
+            <div class="token-param-rows">
+              <div class="token-param-row" *ngFor="let row of tokenBodyParams(); let i = index; trackBy: trackParamByIndex">
+                <input type="text" class="param-key-input"
+                  placeholder="{{ 'embeddedTest.getToken.paramKey' | t }}"
+                  [value]="row.key"
+                  (input)="updateTokenBodyParamKey(i, $any($event.target).value)">
+                <input type="text" class="param-val-input"
+                  placeholder="{{ 'embeddedTest.getToken.paramValue' | t }}"
+                  [value]="row.value"
+                  (input)="updateTokenBodyParamValue(i, $any($event.target).value)">
+                <button type="button" class="btn-remove-param" (click)="removeTokenBodyParam(i)">✕</button>
+              </div>
+              <div class="token-params-empty" *ngIf="tokenBodyParams().length === 0">
+                {{ 'embeddedTest.getToken.noParams' | t }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: json path + button -->
+          <div class="get-token-row get-token-row-bottom">
+            <div class="get-token-field get-token-path-wrap">
+              <label class="field-label">
+                {{ 'embeddedTest.getToken.jsonPath' | t }}
+                <span class="field-badge optional">{{ 'embeddedTest.getToken.jsonPathHint' | t }}</span>
+              </label>
+              <input type="text" class="url-input"
+                [value]="tokenJsonPath()"
+                (input)="tokenJsonPath.set($any($event.target).value)"
+                placeholder="token">
+            </div>
+            <button type="button" class="fetch-token-btn"
+              (click)="fetchToken()"
+              [disabled]="!selectedProfileId() || !tokenUrl().trim() || fetchingToken()">
+              <span *ngIf="!fetchingToken()">🔑 {{ 'embeddedTest.getToken.fetch' | t }}</span>
+              <span *ngIf="fetchingToken()" class="running-label">
+                <span class="spinner"></span>{{ 'embeddedTest.getToken.fetching' | t }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Success result -->
+          <div class="fetch-token-result" *ngIf="fetchedToken()">
+            <div class="fetch-token-result-inner">
+              <span class="fetch-token-status-badge status-ok" *ngIf="fetchTokenStatus()">{{ fetchTokenStatus() }}</span>
+              <span class="fetched-token-preview">{{ fetchedToken()!.length > 80 ? (fetchedToken()!.substring(0, 80) + '…') : fetchedToken() }}</span>
+            </div>
+            <button type="button" class="apply-token-btn" (click)="applyFetchedToken()">
+              ↓ {{ 'embeddedTest.getToken.applyToken' | t }}
+            </button>
+          </div>
+
+          <!-- Error -->
+          <div class="fetch-token-error" *ngIf="fetchTokenError()">
+            <span class="error-icon-sm">✗</span>
+            {{ fetchTokenError() }}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Request form -->
+      <form [formGroup]="form" (ngSubmit)="run()" novalidate>
+        <div class="section-card">
+          <div class="card-section-title">{{ 'embeddedTest.request' | t }}</div>
+
+          <!-- Method + URL + Run button -->
+          <div class="url-row">
+            <p-dropdown formControlName="method" [options]="methodOptions" optionLabel="label" optionValue="value"
+              (onChange)="onMethodChange($event.value)" [style]="{'width': '120px'}">
+            </p-dropdown>
+
+            <div class="url-field">
+              <input type="text" formControlName="url" class="url-input"
+                placeholder="{{ 'embeddedTest.urlPlaceholder' | t }}"
+                [class.input-error]="form.get('url')?.invalid && form.get('url')?.touched" autocomplete="off">
+              <div class="field-error" *ngIf="form.get('url')?.errors?.['required'] && form.get('url')?.touched">
+                {{ 'embeddedTest.urlRequired' | t }}
+              </div>
+              <div class="field-error" *ngIf="form.get('url')?.errors?.['pattern'] && form.get('url')?.touched">
+                {{ 'embeddedTest.urlInvalid' | t }}
+              </div>
+            </div>
+
+            <button *ngIf="auth.hasPermission('endpoints.run')" type="submit" class="run-btn" [disabled]="running()">
+              <span *ngIf="!running()">▶&nbsp; {{ 'embeddedTest.run' | t }}</span>
+              <span *ngIf="running()" class="running-label">
+                <span class="spinner"></span> {{ 'embeddedTest.running' | t }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Bearer token -->
+          <div class="form-field">
+            <div class="token-label-row">
+              <label class="field-label">
+                {{ 'embeddedTest.token' | t }}
+                <span class="field-badge" [class.badge-dimmed]="!requestUsePrefix()">Bearer</span>
+              </label>
+              <label class="prefix-toggle-label">
+                <input type="checkbox" class="prefix-checkbox"
+                  [checked]="requestUsePrefix()"
+                  (change)="requestUsePrefix.set($any($event.target).checked)">
+                <span>{{ 'embeddedTest.usePrefix' | t }}</span>
+              </label>
+            </div>
+            <textarea formControlName="token" class="mono-input token-input" rows="3"
+              placeholder="{{ 'embeddedTest.tokenPlaceholder' | t }}"
+              [class.input-error]="form.get('token')?.invalid && form.get('token')?.touched"
+              autocomplete="off"></textarea>
+            <div class="field-error" *ngIf="form.get('token')?.errors?.['required'] && form.get('token')?.touched">
+              {{ 'embeddedTest.tokenRequired' | t }}
+            </div>
+          </div>
+
+          <!-- Request body (POST / PUT / PATCH only) -->
+          <div class="form-field" *ngIf="hasBody()">
+            <div class="body-label-row">
+              <label class="field-label">
+                {{ 'embeddedTest.body' | t }}
+                <span class="field-badge optional">{{ 'embeddedTest.bodyOptional' | t }}</span>
+              </label>
+              <button type="button" class="mock-btn" [disabled]="!form.get('body')?.value?.trim()"
+                (click)="generateMock()" title="{{ 'embeddedTest.generateMockTitle' | t }}">
+                🎲 {{ 'embeddedTest.generateMock' | t }}
+              </button>
+            </div>
+            <textarea formControlName="body" class="mono-input body-input" rows="9"
+              placeholder="{{ 'embeddedTest.bodyPlaceholder' | t }}"
+              [class.input-error]="form.get('body')?.invalid && form.get('body')?.touched"></textarea>
+            <div class="field-error" *ngIf="form.get('body')?.errors?.['invalidJson'] && form.get('body')?.touched">
+              {{ 'embeddedTest.bodyInvalidJson' | t }}
+            </div>
+          </div>
+
+          <!-- Signed headers info -->
+          <div class="info-banner">
+            <span class="info-icon">🔐</span>
+            <span>{{ 'embeddedTest.hmacInfo' | t }}</span>
+          </div>
+        </div>
+      </form>
+
+      <!-- Response panel -->
+      <div class="section-card response-card" *ngIf="hasResult()">
+        <div class="card-section-title">{{ 'embeddedTest.response' | t }}</div>
+
+        <!-- Network / CORS error -->
+        <div class="response-error-banner" *ngIf="responseError()">
+          <span class="error-icon">✗</span>
+          <div>
+            <div class="error-title">{{ 'embeddedTest.networkError' | t }}</div>
+            <div class="error-message">{{ responseError() }}</div>
+            <div class="error-hint">{{ 'embeddedTest.corsHint' | t }}</div>
+          </div>
+        </div>
+
+        <!-- HTTP status + body -->
+        <ng-container *ngIf="responseStatus() !== null">
+          <div class="status-row">
+            <span class="status-badge" [class.status-ok]="responseIsSuccess" [class.status-err]="!responseIsSuccess">
+              {{ responseIsSuccess ? '✓' : '✗' }}&nbsp; {{ responseStatus() }}
+            </span>
+            <span class="status-label" *ngIf="responseIsSuccess">{{ 'embeddedTest.success' | t }}</span>
+            <span class="status-label err-label" *ngIf="!responseIsSuccess">{{ 'embeddedTest.failed' | t }}</span>
+          </div>
+
+          <div class="response-body-wrap" *ngIf="responseBody()">
+            <app-json-viewer *ngIf="parsedResponseJson" [content]="responseBody()"></app-json-viewer>
+            <pre class="response-raw" *ngIf="!parsedResponseJson">{{ responseBody() }}</pre>
+          </div>
+
+          <div class="empty-body" *ngIf="!responseBody()">
+            {{ 'embeddedTest.emptyBody' | t }}
+          </div>
+        </ng-container>
+      </div>
+
+    </div><!-- /right-col -->
+  </div><!-- /two-col-layout -->
+
+</div>

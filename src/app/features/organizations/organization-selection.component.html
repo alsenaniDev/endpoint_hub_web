@@ -1,0 +1,93 @@
+<main class="organization-access">
+  <header class="access-topbar">
+    <div class="brand-mark">
+      <span class="brand-icon" aria-hidden="true">&lt;&gt;</span>
+      <span>{{ 'login.title' | t }}</span>
+    </div>
+    <div class="account-actions">
+      <span class="account-name">{{ account()?.username }}</span>
+      <button type="button" class="avatar" [attr.aria-label]="'access.account' | t">
+        {{ (account()?.username || '?').slice(0, 1).toUpperCase() }}
+      </button>
+      <button type="button" class="text-action" (click)="signOut()">{{ 'access.signOut' | t }}</button>
+    </div>
+  </header>
+
+  <section class="selection-content" aria-labelledby="organization-heading">
+    <div class="selection-heading">
+      <span class="eyebrow">{{ 'access.accessContext' | t }}</span>
+      <h1 id="organization-heading">{{ 'access.chooseOrganization' | t }}</h1>
+      <p>{{ 'access.organizationSubtitle' | t }}</p>
+    </div>
+
+    <label class="organization-search">
+      <span class="pi pi-search" aria-hidden="true"></span>
+      <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)"
+        [placeholder]="'access.searchOrganizations' | t"
+        [attr.aria-label]="'access.searchOrganizations' | t">
+    </label>
+
+    <div class="selection-error" *ngIf="context.error() && context.error() !== 'org.noMembership'" role="alert">
+      <span class="pi pi-exclamation-circle" aria-hidden="true"></span>
+      <p>{{ context.error()! | t }}</p>
+      <button type="button" class="secondary-action" (click)="reload()" [disabled]="context.loading()">
+        {{ 'common.retry' | t }}
+      </button>
+    </div>
+
+    <div class="selection-loading" *ngIf="context.loading()" role="status">
+      <span class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+      {{ 'access.loadingOrganizations' | t }}
+    </div>
+
+    <div class="organization-list" *ngIf="!context.loading() && filteredOrganizations().length">
+      <article class="organization-row" *ngFor="let organization of filteredOrganizations()"
+        [class.selected]="context.activeOrganizationId() === organization.id">
+        <div class="organization-avatar" aria-hidden="true">
+          <span *ngIf="organization.membership.isReadOnly" class="pi pi-building" aria-hidden="true"></span>
+          <ng-container *ngIf="!organization.membership.isReadOnly">{{ organization.name.slice(0, 1).toUpperCase() }}</ng-container>
+        </div>
+        <div class="organization-info">
+          <div class="organization-name-line">
+            <h2>{{ organization.membership.isReadOnly ? ('access.restrictedOrganization' | t) : organization.name }}</h2>
+            <span class="current-badge" *ngIf="context.activeOrganizationId() === organization.id">
+              {{ 'access.selected' | t }}
+            </span>
+          </div>
+          <p>
+            <span *ngIf="!organization.membership.isReadOnly">{{ organization.type }}</span>
+            <span *ngIf="!organization.membership.isReadOnly" aria-hidden="true"> · </span>
+            {{ organization.membership.isReadOnly ? ('org.structuralOnly' | t) : organization.membership.role.name }}
+          </p>
+        </div>
+        <button type="button" class="organization-action"
+          [class.primary]="context.activeOrganizationId() === organization.id"
+          [disabled]="context.loading() || selectingId() !== null"
+          (click)="context.activeOrganizationId() === organization.id
+            ? continueToWorkspace() : openOrganization(organization.id)">
+          <span *ngIf="selectingId() === organization.id" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+          <span *ngIf="selectingId() !== organization.id"
+            class="pi" [class.pi-arrow-right]="context.activeOrganizationId() === organization.id"
+            [class.pi-sign-in]="context.activeOrganizationId() !== organization.id" aria-hidden="true"></span>
+          {{ (context.activeOrganizationId() === organization.id ? 'access.continue' : 'access.open') | t }}
+        </button>
+      </article>
+    </div>
+
+    <section class="selection-empty" *ngIf="!context.loading() &&
+      ((context.error() === 'org.noMembership') || (!context.error() && !filteredOrganizations().length))" role="status">
+      <span class="pi pi-building" aria-hidden="true"></span>
+      <h2>{{ search() && context.error() !== 'org.noMembership' ? ('access.noOrganizationsMatch' | t) : ('org.noMembership' | t) }}</h2>
+      <p>{{ search() && context.error() !== 'org.noMembership' ? ('access.adjustSearch' | t) : ('access.noMembershipHint' | t) }}</p>
+      <button type="button" class="secondary-action" *ngIf="!search() || context.error() === 'org.noMembership'" (click)="reload()" [disabled]="context.loading()">
+        {{ 'common.retry' | t }}
+      </button>
+    </section>
+
+    <p class="selection-note">{{ 'access.organizationSecurityNote' | t }}</p>
+    <footer class="selection-footer">
+      <span>{{ 'access.switchAccountPrompt' | t }}</span>
+      <button type="button" class="text-action" (click)="signOut()">{{ 'access.switchAccount' | t }}</button>
+    </footer>
+  </section>
+</main>

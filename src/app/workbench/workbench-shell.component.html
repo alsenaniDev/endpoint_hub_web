@@ -1,0 +1,103 @@
+<div class="workbench-shell">
+  <button class="mobile-scrim" *ngIf="mobileNavOpen()" (click)="closeMobileNav()"
+    [attr.aria-label]="'workbench.closeNavigation' | t"></button>
+
+  <aside class="workbench-sidebar" [class.mobile-open]="mobileNavOpen()"
+    [attr.aria-label]="'workbench.navigation' | t">
+    <div class="sidebar-header">
+      <a class="brand" routerLink="/workbench" [attr.aria-label]="'workbench.brandLabel' | t"
+        (click)="closeMobileNav()">
+        <span class="brand-mark" aria-hidden="true">&lt;&gt;</span>
+        <span class="brand-name">ENDPOINTS HUB</span>
+      </a>
+      <button class="drawer-close-button" type="button" (click)="closeMobileNav()"
+        [attr.aria-label]="'workbench.closeNavigation' | t" [attr.title]="'workbench.closeNavigation' | t">
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <nav class="primary-nav" [attr.aria-label]="'workbench.organizationWorkspace' | t">
+      <ng-container *ngFor="let item of navigation">
+        <a *ngIf="canVisit(item)"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/workbench/overview' }"
+          class="nav-link"
+          (click)="closeMobileNav()">
+          <i [class]="item.icon" aria-hidden="true"></i>
+          <span>{{ item.translationKey | t }}</span>
+        </a>
+      </ng-container>
+      <a *ngIf="organization.ready()" routerLink="/workbench/notifications" routerLinkActive="active"
+        class="nav-link" (click)="closeMobileNav()">
+        <i class="pi pi-bell" aria-hidden="true"></i><span>{{ 'workbench.nav.notifications' | t }}</span>
+      </a>
+      <a *ngIf="organization.ready()" routerLink="/workbench/settings/members" routerLinkActive="active"
+        class="nav-link" (click)="closeMobileNav()">
+        <i class="pi pi-cog" aria-hidden="true"></i><span>{{ 'workbench.nav.settings' | t }}</span>
+      </a>
+    </nav>
+
+    <div class="shell-preference-controls" role="group" [attr.aria-label]="'workbench.displayPreferences' | t">
+      <button class="shell-preference-button" type="button" (click)="theme.toggle()"
+        [attr.aria-label]="(theme.theme() === 'light' ? 'header.switchToDark' : 'header.switchToLight') | t"
+        [attr.title]="(theme.theme() === 'light' ? 'header.switchToDark' : 'header.switchToLight') | t">
+        <i class="pi" [class.pi-moon]="theme.theme() === 'light'" [class.pi-sun]="theme.theme() === 'dark'"
+          aria-hidden="true"></i>
+        <span>{{ (theme.theme() === 'light' ? 'workbench.theme.light' : 'workbench.theme.dark') | t }}</span>
+      </button>
+      <button class="shell-preference-button" type="button" (click)="lang.toggle()"
+        [attr.aria-label]="(lang.lang() === 'en' ? 'header.switchToAr' : 'header.switchToEn') | t"
+        [attr.title]="(lang.lang() === 'en' ? 'header.switchToAr' : 'header.switchToEn') | t">
+        <i class="pi pi-language" aria-hidden="true"></i>
+        <span>{{ lang.lang() === 'en' ? 'AR' : 'EN' }}</span>
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="member-avatar" aria-hidden="true">
+        {{ auth.currentUser()?.username?.slice(0, 1)?.toUpperCase() || 'U' }}
+      </div>
+      <div class="member-context">
+        <span class="member-name">{{ auth.currentUser()?.username }}</span>
+        <span class="member-role">{{ organization.membership()?.role?.name || 'Organization member' }}</span>
+      </div>
+      <button class="logout-button" type="button" (click)="auth.logout()"
+        [attr.aria-label]="'sidebar.logOut' | t" [attr.title]="'sidebar.logOut' | t">
+        <i class="pi pi-sign-out" aria-hidden="true"></i>
+      </button>
+    </div>
+  </aside>
+
+  <div class="workbench-main">
+    <header class="context-bar">
+      <button class="menu-button" type="button" (click)="mobileNavOpen.set(!mobileNavOpen())"
+        [attr.aria-expanded]="mobileNavOpen()" [attr.aria-label]="'workbench.toggleNavigation' | t">
+        <i class="pi pi-bars" aria-hidden="true"></i>
+      </button>
+      <div class="organization-context">
+        <app-organization-switcher></app-organization-switcher>
+      </div>
+      <div class="context-actions">
+        <app-notification-bell></app-notification-bell>
+        <span class="role-chip" *ngIf="organization.ready()">
+          {{ organization.membership()?.role?.name }}
+        </span>
+        <span class="top-avatar" aria-hidden="true">
+          {{ auth.currentUser()?.username?.slice(0, 1)?.toUpperCase() || 'U' }}
+        </span>
+      </div>
+    </header>
+
+    <main class="workbench-content">
+      <ng-container *ngFor="let revision of [organization.revision()]; trackBy: trackRevision">
+        <router-outlet *ngIf="organization.ready()"></router-outlet>
+      </ng-container>
+      <section class="workbench-context-state" *ngIf="!organization.ready()">
+        <p role="status" *ngIf="organization.loading()">{{ 'common.loading' | t }}</p>
+        <p role="alert" *ngIf="!organization.loading() && organization.error()">{{ organization.error()! | t }}</p>
+        <a *ngIf="!organization.loading()" routerLink="/organizations">{{ 'org.select' | t }}</a>
+      </section>
+    </main>
+  </div>
+</div>

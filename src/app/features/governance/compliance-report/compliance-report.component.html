@@ -1,0 +1,136 @@
+<div class="page" [class.governance-workspace]="workbench">
+<div class="back-nav">
+  <a [routerLink]="baseRoute" class="back-link">← Back to Standards</a>
+</div>
+
+<app-loading *ngIf="loading()"></app-loading>
+<p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+<p *ngIf="structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+<ng-container *ngIf="!loading() && !errorKey() && report()">
+  <ng-container *ngIf="!workbench; else findingsWorkspace">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Compliance Report</h1>
+      <p class="page-subtitle">{{ structuralOnly() ? report()!.standardId : report()!.standardName }} &mdash; {{ report()!.runDate | date:'MMM d, y HH:mm' }}</p>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card" [class.score-high]="report()!.overallScore >= 80" [class.score-mid]="report()!.overallScore >= 50 && report()!.overallScore < 80" [class.score-low]="report()!.overallScore < 50">
+      <div class="stat-value">{{ report()!.overallScore | number:'1.0-1' }}%</div>
+      <div class="stat-label">Overall Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ report()!.totalEndpoints }}</div>
+      <div class="stat-label">Total Endpoints</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value stat-pass">{{ report()!.passedEndpoints }}</div>
+      <div class="stat-label">Passed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value stat-fail">{{ report()!.failedEndpoints }}</div>
+      <div class="stat-label">Failed</div>
+    </div>
+    <div class="stat-card breakdown-card">
+      <div class="breakdown-title">Violations by Severity</div>
+      <div class="breakdown-list">
+        <div *ngFor="let sv of report()!.severityBreakdown" class="breakdown-item">
+          <span class="badge" [ngClass]="severityClass(sv.severity)">{{ sv.severity }}</span>
+          <strong>{{ sv.failedCount }}</strong>
+        </div>
+        <span *ngIf="report()!.severityBreakdown.length === 0" class="no-violations">🎉 No violations</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Bar -->
+  <div class="score-bar-row">
+    <div class="score-track">
+      <div class="score-fill" [class]="scoreClass(report()!.overallScore)" [style.width.%]="report()!.overallScore"></div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <input *ngIf="!structuralOnly()" class="filter-search" type="text" placeholder="Search by path..." [(ngModel)]="searchPath">
+    <select class="filter-select" [(ngModel)]="filterSeverity">
+      <option value="">All Severities</option>
+      <option *ngFor="let s of severities" [value]="s">{{ s }} violations</option>
+    </select>
+    <span class="filter-count">{{ filteredSummaries.length }} endpoints</span>
+  </div>
+
+  <!-- Endpoint Compliance List -->
+  <div class="endpoint-list">
+    <div *ngIf="filteredSummaries.length === 0" class="empty-state">No endpoints match the current filters.</div>
+
+    <div class="endpoint-row" *ngFor="let ep of filteredSummaries">
+      <div class="endpoint-summary" (click)="toggleEndpoint(ep.endpointId)">
+        <div class="endpoint-left">
+          <span class="method-badge method-{{ep.method.toLowerCase()}}">{{ ep.method }}</span>
+          <span class="path" *ngIf="!structuralOnly()">{{ ep.path }}</span>
+          <code *ngIf="structuralOnly()">{{ ep.endpointId }}</code>
+          <span class="tag" *ngIf="!structuralOnly() && ep.tag">{{ ep.tag }}</span>
+        </div>
+        <div class="endpoint-right">
+          <div class="mini-stats">
+            <span class="stat-pass" title="Passed">✓ {{ ep.passedRules }}</span>
+            <span class="stat-fail" *ngIf="ep.failedRules > 0" title="Failed">✗ {{ ep.failedRules }}</span>
+            <span class="stat-skip" *ngIf="ep.skippedRules > 0" title="Skipped">– {{ ep.skippedRules }}</span>
+          </div>
+          <div class="inline-score" [class]="scoreClass(ep.complianceScore)">
+            {{ ep.complianceScore | number:'1.0-1' }}%
+          </div>
+          <span class="expand-icon">{{ isExpanded(ep.endpointId) ? '▲' : '▼' }}</span>
+        </div>
+      </div>
+
+      <!-- Violations Detail -->
+      <div class="violations" *ngIf="isExpanded(ep.endpointId)">
+        <div *ngIf="ep.violations.length === 0" class="no-violations">✓ All rules passed for this endpoint.</div>
+        <div class="violation-item" *ngFor="let v of ep.violations">
+          <div class="violation-header">
+            <span class="badge" [ngClass]="severityClass(v.severity)">{{ v.severity }}</span>
+            <span class="rule-name">{{ structuralOnly() ? v.ruleId : v.ruleName }}</span>
+            <span class="rule-type badge badge-type">{{ v.ruleType }}</span>
+          </div>
+          <div class="violation-message" *ngIf="!structuralOnly() && v.message">{{ v.message }}</div>
+          <div class="suggested-fix" *ngIf="!structuralOnly() && v.suggestedFix">
+            <span class="fix-label">💡 Fix:</span> {{ v.suggestedFix }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </ng-container>
+  <ng-template #findingsWorkspace>
+    <header class="gov-header"><div><nav class="gov-breadcrumb">{{ structuralOnly() ? organization.activeOrganizationId() : organization.activeOrganization()?.name }} / {{ 'gov.title' | t }} / {{ 'gov.results' | t }}</nav><h1>{{ 'gov.findings' | t }}</h1><p>{{ structuralOnly() ? report()!.standardId : report()!.standardName }} · {{ report()!.runDate | date:'short' }}</p></div><a class="btn-secondary" [routerLink]="[baseRoute, 'standards', report()!.standardId]">{{ 'gov.viewStandard' | t }}</a></header>
+    <div class="gov-result-line"><span>{{ 'gov.score' | t }} <strong>{{ report()!.overallScore | number:'1.0-1' }}%</strong></span><span>{{ report()!.totalEndpoints }} {{ 'gov.endpoints' | t }}</span><span>{{ report()!.passedEndpoints }} {{ 'gov.passed' | t }}</span><span>{{ report()!.failedEndpoints }} {{ 'gov.failed' | t }}</span><span *ngFor="let severity of report()!.severityBreakdown">{{ severity.severity }}: {{ severity.failedCount }}</span></div>
+    <div class="gov-findings-filter">
+      <label class="gov-search" *ngIf="!structuralOnly()"><span class="pi pi-search" aria-hidden="true"></span><input type="search" [(ngModel)]="searchPath" [attr.aria-label]="'gov.searchEndpoints' | t" [placeholder]="'gov.searchEndpoints' | t"></label>
+      <select [(ngModel)]="filterSeverity" [attr.aria-label]="'gov.severity' | t"><option value="">{{ 'gov.allSeverities' | t }}</option><option *ngFor="let s of severities" [value]="s">{{ s }}</option></select><span>{{ filteredSummaries.length }} {{ 'gov.endpoints' | t }}</span>
+    </div>
+    <section class="gov-panel">
+      <div class="gov-section-heading"><h2>{{ 'gov.endpointFindings' | t }}</h2><span>{{ 'gov.recordedResults' | t }}</span></div>
+      <div class="gov-state" *ngIf="!filteredSummaries.length">{{ 'gov.noMatches' | t }}</div>
+      <article class="gov-finding" *ngFor="let ep of filteredSummaries">
+        <button (click)="toggleEndpoint(ep.endpointId)" [attr.aria-expanded]="isExpanded(ep.endpointId)">
+          <span><span class="method-badge method-{{ep.method.toLowerCase()}}">{{ ep.method }}</span> <code>{{ structuralOnly() ? ep.endpointId : ep.path }}</code></span>
+          <span>{{ ep.failedRules }} {{ 'gov.failed' | t }} · {{ ep.complianceScore | number:'1.0-1' }}%</span>
+        </button>
+        <div *ngIf="isExpanded(ep.endpointId)">
+          <p class="gov-description" *ngIf="!ep.violations.length">{{ 'gov.allRulesPassed' | t }}</p>
+          <div class="gov-finding" *ngFor="let v of ep.violations">
+            <div class="gov-actions"><span class="badge" [ngClass]="severityClass(v.severity)">{{ v.severity }}</span><strong>{{ structuralOnly() ? v.ruleId : v.ruleName }}</strong><small>{{ v.ruleType }} · {{ v.status }}</small></div>
+            <p class="gov-description" *ngIf="!structuralOnly() && v.message">{{ v.message }}</p>
+            <p class="gov-description" *ngIf="!structuralOnly() && v.suggestedFix">{{ 'gov.suggestedFix' | t }}: {{ v.suggestedFix }}</p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </ng-template>
+</ng-container>
+</div>

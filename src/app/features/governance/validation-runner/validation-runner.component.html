@@ -1,0 +1,127 @@
+<div class="page" [class.governance-workspace]="workbench">
+<div class="back-nav">
+  <a [routerLink]="baseRoute" class="back-link">← Back to Standards</a>
+</div>
+
+<header class="gov-header" *ngIf="workbench">
+  <div><nav class="gov-breadcrumb">{{ organization.activeOrganization()?.name }} / {{ 'gov.title' | t }}</nav><h1>{{ 'gov.evaluate' | t }}</h1><p>{{ 'gov.evaluationHint' | t }}</p></div>
+</header>
+<div class="page-header" *ngIf="!workbench">
+  <div>
+    <h1 class="page-title">Run Validation</h1>
+    <p class="page-subtitle">Select a standard and optional scope to validate your API endpoints.</p>
+  </div>
+</div>
+
+<p *ngIf="errorKey()" class="gov-error" role="alert">{{ errorKey()! | t }}</p>
+<p *ngIf="!canRun()" class="gov-notice" role="note">{{ 'gov.evaluationUnavailable' | t }}</p>
+<div [class.runner-layout]="!workbench" [class.gov-evaluation-layout]="workbench">
+  <section [class.runner-card]="!workbench" [class.gov-panel]="workbench">
+    <div class="gov-section-heading" *ngIf="workbench"><h2>{{ 'gov.configuration' | t }}</h2><span>{{ 'gov.scope' | t }}</span></div>
+    <div class="loading-state" *ngIf="loading()"><span class="spinner"></span> Loading standards...</div>
+
+    <form [formGroup]="form" (ngSubmit)="run()" *ngIf="!loading() && canRun()">
+      <div class="form-group">
+        <label>Standard <span class="required">*</span></label>
+        <select formControlName="standardId">
+          <option value="">Select a standard...</option>
+          <option *ngFor="let s of standards()" [value]="s.id">{{ s.name }}</option>
+        </select>
+        <small *ngIf="standards().length === 0" class="form-hint">No active standards found. Please create and activate a standard first.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Scope</label>
+        <select formControlName="scopeType">
+          <option value="all">All assigned scopes</option>
+          <option value="team">Specific Team</option>
+          <option value="system">Specific System</option>
+          <option value="environment">Specific Environment</option>
+          <option value="endpoint">Single Endpoint (by ID)</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="scopeType === 'team'">
+        <label>Team</label>
+        <select formControlName="scopeTeamId">
+          <option value="">Select team...</option>
+          <option *ngFor="let t of teams()" [value]="t.id">{{ t.name }}</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="scopeType === 'system'">
+        <label>System</label>
+        <select formControlName="scopeSystemId">
+          <option value="">Select system...</option>
+          <option *ngFor="let s of systems()" [value]="s.id">{{ s.teamName }} / {{ s.name }}</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="scopeType === 'environment'">
+        <label>Environment</label>
+        <select formControlName="scopeEnvironmentId">
+          <option value="">Select environment...</option>
+          <option *ngFor="let e of environments()" [value]="e.id">{{ e.systemName }} / {{ e.name }}</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="scopeType === 'endpoint'">
+        <label>Endpoint ID</label>
+        <input formControlName="scopeEndpointId" placeholder="Paste the endpoint UUID here">
+      </div>
+
+      <div class="error-msg" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+
+      <button type="submit" class="btn-primary btn-block" [disabled]="running() || !form.value.standardId">
+        <span *ngIf="!running()">▶ Run Validation</span>
+        <span *ngIf="running()">⏳ Running... Please wait</span>
+      </button>
+    </form>
+  </section>
+
+  <!-- Result Panel -->
+  <section class="gov-panel" *ngIf="workbench">
+    <div class="gov-section-heading"><h2>{{ 'gov.results' | t }}</h2></div>
+    <div class="gov-state" *ngIf="!result()" role="status">{{ (running() ? 'gov.evaluating' : 'gov.awaitingEvaluation') | t }}</div>
+    <ng-container *ngIf="result() as run">
+      <div class="gov-result-line"><strong>{{ run.status }}</strong><span>{{ run.standardName }}</span></div>
+      <dl class="gov-definition-grid"><div><dt>{{ 'gov.score' | t }}</dt><dd>{{ run.overallComplianceScore | number:'1.0-1' }}%</dd></div><div><dt>{{ 'gov.endpoints' | t }}</dt><dd>{{ run.totalEndpoints }}</dd></div><div><dt>{{ 'gov.passed' | t }}</dt><dd>{{ run.passedEndpoints }}</dd></div><div><dt>{{ 'gov.failed' | t }}</dt><dd>{{ run.failedEndpoints }}</dd></div></dl>
+      <div class="gov-result-line"><span>{{ run.createdAt | date:'short' }}</span><span>{{ run.completedAt | date:'short' }}</span></div>
+      <p *ngIf="run.errorMessage" role="alert">{{ run.errorMessage }}</p>
+      <button class="btn-primary" (click)="viewReport()">{{ 'gov.viewFindings' | t }}</button>
+    </ng-container>
+  </section>
+  <div class="result-card" *ngIf="!workbench && result()">
+    <div class="result-header">
+      <div class="result-icon" [class.icon-pass]="result()!.overallComplianceScore >= 80" [class.icon-fail]="result()!.overallComplianceScore < 80">
+        {{ result()!.overallComplianceScore >= 80 ? '✓' : '✗' }}
+      </div>
+      <div>
+        <div class="result-title">Validation Complete</div>
+        <div class="result-standard">{{ result()!.standardName }}</div>
+      </div>
+    </div>
+    <div class="result-stats">
+      <div class="result-stat">
+        <div class="result-score" [ngClass]="scoreClass(result()!.overallComplianceScore)">
+          {{ result()!.overallComplianceScore | number:'1.0-1' }}%
+        </div>
+        <div class="result-label">Compliance Score</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num">{{ result()!.totalEndpoints }}</div>
+        <div class="result-label">Endpoints Checked</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num pass-num">{{ result()!.passedEndpoints }}</div>
+        <div class="result-label">Passed</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-num fail-num">{{ result()!.failedEndpoints }}</div>
+        <div class="result-label">Failed</div>
+      </div>
+    </div>
+    <div class="score-track">
+      <div class="score-fill" [class]="scoreClass(result()!.overallComplianceScore)" [style.width.%]="result()!.overallComplianceScore"></div>
+    </div>
+    <button class="btn-primary btn-block" style="margin-top:16px" (click)="viewReport()">📊 View Full Report</button>
+  </div>
+</div>
+</div>

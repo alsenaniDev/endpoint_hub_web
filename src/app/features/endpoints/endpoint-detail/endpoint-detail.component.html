@@ -1,0 +1,175 @@
+<div class="page" [class.workbench-detail]="isWorkbench" [class.embedded-detail]="embedded">
+  <div class="back-link" *ngIf="!embedded"><a [routerLink]="listRoute">{{ 'endpoints.backToList' | t }}</a></div>
+
+  <app-loading [loading]="loading()"></app-loading>
+  <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+  <p *ngIf="structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+  <ng-container *ngIf="!loading() && endpoint()">
+    <div class="endpoint-header" *ngIf="!isWorkbench">
+      <div class="endpoint-title-row">
+        <app-method-badge [method]="endpoint()!.method"></app-method-badge>
+        <h1 class="endpoint-path">{{ endpoint()!.path }}</h1>
+        <code *ngIf="structuralOnly()">{{ endpoint()!.id }}</code>
+        <span *ngIf="endpoint()!.isDeprecated" class="deprecated-badge">{{ 'endpoints.detail.deprecated' | t }}</span>
+      </div>
+      <p *ngIf="!structuralOnly()" class="endpoint-summary">{{ endpoint()!.summary }}</p>
+      <p *ngIf="!structuralOnly() && endpoint()!.description" class="endpoint-desc">{{ endpoint()!.description }}</p>
+      <div class="endpoint-meta">
+        <span>{{ structuralOnly() ? endpoint()!.environmentId : endpoint()!.environmentName }}</span>
+        <span *ngIf="!structuralOnly()">{{ endpoint()!.tag }}</span>
+        <span>🕐 {{ 'endpoints.detail.synced' | t }} {{ endpoint()!.lastSyncedAt | date:'short' }}</span>
+      </div>
+      <div class="endpoint-actions">
+        <a *ngIf="!structuralOnly() && auth.hasPermission('endpoints.run')" [routerLink]="endpointRoute('run')"
+          class="btn-primary">{{ 'endpoints.detail.runRequest' | t
+          }}</a>
+        <a *ngIf="!structuralOnly()" [routerLink]="endpointRoute('history')" class="btn-secondary">{{
+          'endpoints.detail.changeHistory' | t }}</a>
+        <a *ngIf="!structuralOnly()" [routerLink]="endpointRoute('code')" class="btn-secondary">{{
+          'endpoints.detail.generateCode' | t }}</a>
+      </div>
+    </div>
+
+    <ng-container *ngIf="isWorkbench">
+      <header *ngIf="!embedded" class="detail-resource-heading">
+        <app-method-badge [method]="endpoint()!.method"></app-method-badge>
+        <h1>{{ structuralOnly() ? endpoint()!.id : endpoint()!.path }}</h1>
+      </header>
+      <div class="documentation-overview" *ngIf="!compactDocumentation">
+        <section class="purpose-panel">
+          <h2>{{ 'workspace.purpose' | t }}</h2>
+          <p *ngIf="!structuralOnly()">{{ endpoint()!.description || endpoint()!.summary || ('workspace.noDescription' | t) }}</p>
+          <p *ngIf="structuralOnly()">{{ 'org.structuralOnly' | t }}</p>
+          <dl>
+            <div><dt>{{ 'workspace.system' | t }}</dt><dd>{{ structuralOnly() ? endpoint()!.systemId : endpoint()!.systemName }}</dd></div>
+            <div><dt>{{ 'workspace.environment' | t }}</dt><dd>{{ structuralOnly() ? endpoint()!.environmentId : endpoint()!.environmentName }}</dd></div>
+            <div><dt>{{ 'runner.endpointId' | t }}</dt><dd><code>{{ endpoint()!.id }}</code></dd></div>
+            <div *ngIf="endpoint()!.lastSyncedAt"><dt>{{ 'endpoints.detail.synced' | t }}</dt><dd>{{ endpoint()!.lastSyncedAt | date:'short' }}</dd></div>
+          </dl>
+        </section>
+        <aside class="documentation-context">
+          <h2>{{ 'workspace.documentation' | t }}</h2>
+          <div><span>{{ 'endpoints.detail.parameters' | t }}</span><strong>{{ endpoint()!.parameters.length }}</strong></div>
+          <div><span>{{ 'endpoints.detail.headers' | t }}</span><strong>{{ endpoint()!.headers.length }}</strong></div>
+          <div><span>{{ 'endpoints.detail.requestBody' | t }}</span><strong>{{ endpoint()!.requestBodies.length }}</strong></div>
+          <div><span>{{ 'endpoints.detail.responses' | t }}</span><strong>{{ endpoint()!.responses.length }}</strong></div>
+          <div class="documentation-actions">
+            <a *ngIf="!embedded && !structuralOnly() && auth.hasPermission('endpoints.run')" [routerLink]="endpointRoute('run')">{{ 'endpoints.detail.runRequest' | t }}</a>
+            <a *ngIf="!structuralOnly()" [routerLink]="endpointRoute('history')">{{ 'endpoints.detail.changeHistory' | t }}</a>
+            <a *ngIf="!structuralOnly()" [routerLink]="endpointRoute('code')">{{ 'endpoints.detail.generateCode' | t }}</a>
+          </div>
+        </aside>
+      </div>
+    </ng-container>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button *ngFor="let t of tabs" class="tab" [class.active]="activeTab === t" (click)="activeTab = t">{{ t | t
+        }}</button>
+    </div>
+
+    <!-- Parameters Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'endpoints.detail.parameters'">
+      <div *ngIf="endpoint()!.parameters.length; else noData">
+        <p class="table-scroll-hint">
+          <i class="pi pi-arrows-h" aria-hidden="true"></i>
+          {{ 'endpoints.detail.tableScrollHint' | t }}
+        </p>
+        <div class="param-table-scroll" role="region" tabindex="0"
+          [attr.aria-label]="'endpoints.detail.tableScrollHint' | t">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>{{ 'endpoints.detail.col.name' | t }}</th>
+                <th>{{ 'endpoints.detail.col.in' | t }}</th>
+                <th>{{ 'endpoints.detail.col.type' | t }}</th>
+                <th>{{ 'endpoints.detail.col.required' | t }}</th>
+                <th>{{ 'endpoints.detail.col.description' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of endpoint()!.parameters">
+                <td class="param-name">{{ p.name }}</td>
+                <td><span class="location-badge">{{ p.location }}</span></td>
+                <td class="mono">{{ p.schema }}</td>
+                <td>{{ p.required ? '✓' : '—' }}</td>
+                <td class="text-muted">{{ p.description }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Headers Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'endpoints.detail.headers'">
+      <div *ngIf="endpoint()!.headers.length; else noData">
+        <table class="param-table">
+          <thead>
+            <tr>
+              <th>{{ 'endpoints.detail.col.name' | t }}</th>
+              <th>{{ 'endpoints.detail.col.required' | t }}</th>
+              <th>{{ 'endpoints.detail.col.default' | t }}</th>
+              <th>{{ 'endpoints.detail.col.description' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of endpoint()!.headers">
+              <td class="param-name">{{ h.name }}</td>
+              <td>{{ h.required ? '✓' : '—' }}</td>
+              <td class="mono">{{ h.defaultValue }}</td>
+              <td class="text-muted">{{ h.description }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Request Body Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'endpoints.detail.requestBody'">
+      <div *ngFor="let rb of endpoint()!.requestBodies" class="body-section">
+        <div class="content-type-badge">{{ rb.contentType }}</div>
+        <app-json-viewer [content]="rb.schema ?? null"></app-json-viewer>
+        <div *ngIf="rb.example" class="example-section">
+          <div class="section-label">Example</div>
+          <app-json-viewer [content]="rb.example"></app-json-viewer>
+        </div>
+      </div>
+      <ng-template #noBody>
+        <div class="empty-tab">{{ 'endpoints.detail.noRequestBody' | t }}</div>
+      </ng-template>
+    </div>
+
+    <!-- Responses Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'endpoints.detail.responses'">
+      <div *ngFor="let r of endpoint()!.responses" class="response-section">
+        <div class="response-header">
+          <span class="status-code" [class]="'status-' + r.statusCode[0]">{{ r.statusCode }}</span>
+          <span class="response-desc">{{ r.description }}</span>
+        </div>
+        <app-json-viewer *ngIf="r.schema" [content]="r.schema"></app-json-viewer>
+      </div>
+    </div>
+
+    <!-- Notes Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'endpoints.detail.notes'">
+      <div class="form-group">
+        <label>{{ 'endpoints.detail.notes' | t }}</label>
+        <textarea [readOnly]="!canEditNotes()" [(ngModel)]="notesValue" rows="6" [placeholder]="'endpoints.detail.notesPlaceholder' | t"></textarea>
+      </div>
+      <div class="form-group">
+        <label>{{ 'endpoints.detail.usedInPages' | t }}</label>
+        <input type="text" [readOnly]="!canEditNotes()" [(ngModel)]="usedInPages" placeholder="e.g. Login page, User profile">
+      </div>
+      <button *ngIf="canEditNotes()" class="btn-primary" (click)="saveNotes()"
+        [disabled]="savingNotes()">
+        {{ savingNotes() ? ('endpoints.detail.savingNotes' | t) : ('endpoints.detail.saveNotes' | t) }}
+      </button>
+    </div>
+
+    <ng-template #noData>
+      <div class="empty-tab">{{ 'endpoints.detail.noData' | t }}</div>
+    </ng-template>
+  </ng-container>
+</div>

@@ -1,0 +1,421 @@
+<div class="page" [class.swagger-workspace]="isWorkbench">
+  <div class="page-header" *ngIf="!isWorkbench">
+    <div>
+      <h1 class="page-title">{{ 'swaggerSync.title' | t }}</h1>
+      <p class="page-subtitle">{{ 'swaggerSync.subtitle' | t }}</p>
+    </div>
+    <button *ngIf="auth.hasPermission('swaggersync.run')" class="btn-run-now" [disabled]="running()" (click)="runNow()">
+      <span *ngIf="!running()">{{ 'swaggerSync.runAllNow' | t }}</span>
+      <span *ngIf="running()">{{ 'swaggerSync.running' | t }}</span>
+    </button>
+  </div>
+
+  <ng-container *ngIf="!isWorkbench || showSchedule()">
+  <ng-container *ngTemplateOutlet="scheduleEditor"></ng-container>
+  </ng-container>
+  <ng-template #scheduleEditor>
+  <!-- ── Schedule Card ─────────────────────────────────────────────── -->
+  <div class="card" *ngIf="auth.hasPermission('swaggersync.manageschedule')">
+    <div class="card-header">
+      <span class="card-title">{{ 'swaggerSync.schedule' | t }}</span>
+      <button *ngIf="isWorkbench" class="schedule-close" (click)="showSchedule.set(false)" [attr.aria-label]="'common.cancel' | t"><i class="pi pi-times" aria-hidden="true"></i></button>
+      <label class="toggle-wrap">
+        <input type="checkbox" [(ngModel)]="scheduleEnabled" (change)="onEnabledToggle()" class="toggle-input">
+        <span class="toggle-track" [class.on]="scheduleEnabled">
+          <span class="toggle-thumb"></span>
+        </span>
+        <span class="toggle-label">{{ scheduleEnabled ? ('swaggerSync.enabled' | t) : ('swaggerSync.disabled' | t)
+          }}</span>
+      </label>
+    </div>
+
+    <div class="schedule-body" [class.disabled]="!scheduleEnabled">
+
+      <!-- Quick preset buttons -->
+      <div class="section-label">{{ 'swaggerSync.quickPresets' | t }}</div>
+      <div class="preset-grid">
+        <button *ngFor="let p of presets" class="preset-btn" [class.active]="selectedPreset === p.label"
+          (click)="selectPreset(p)">
+          {{ p.label }}
+        </button>
+      </div>
+
+      <!-- ── Custom visual builder ──────────────────────────────────── -->
+      <div *ngIf="selectedPreset === 'Custom'" class="custom-builder">
+        <div class="section-label">{{ 'swaggerSync.customSchedule' | t }}</div>
+
+        <!-- Frequency selector -->
+        <div class="builder-row">
+          <span class="builder-lbl">{{ 'swaggerSync.run' | t }}</span>
+          <div class="seg-group">
+            <button class="seg-btn" [class.active]="frequency === 'hourly'" (click)="setFrequency('hourly')">Every
+              hour</button>
+            <button class="seg-btn" [class.active]="frequency === 'every-n-hours'"
+              (click)="setFrequency('every-n-hours')">Every N hours</button>
+            <button class="seg-btn" [class.active]="frequency === 'daily'"
+              (click)="setFrequency('daily')">Daily</button>
+            <button class="seg-btn" [class.active]="frequency === 'weekly'"
+              (click)="setFrequency('weekly')">Weekly</button>
+            <button class="seg-btn" [class.active]="frequency === 'monthly'"
+              (click)="setFrequency('monthly')">Monthly</button>
+          </div>
+        </div>
+
+        <!-- Every N hours → interval picker -->
+        <div *ngIf="frequency === 'every-n-hours'" class="builder-row">
+          <span class="builder-lbl">{{ 'swaggerSync.every' | t }}</span>
+          <div class="pill-group">
+            <button *ngFor="let n of intervalHours" class="pill-btn" [class.active]="customIntervalH === n"
+              (click)="customIntervalH = n; buildCron()">
+              {{ n }}h
+            </button>
+          </div>
+        </div>
+
+        <!-- Daily / Weekly / Monthly → time picker -->
+        <div *ngIf="frequency === 'weekly'" class="builder-row">
+          <span class="builder-lbl">{{ 'swaggerSync.on' | t }}</span>
+          <div class="pill-group">
+            <button *ngFor="let d of weekdays; let i = index" class="pill-btn" [class.active]="customWeekday === i"
+              (click)="customWeekday = i; buildCron()">
+              {{ d.slice(0,3) }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="frequency === 'monthly'" class="builder-row">
+          <span class="builder-lbl">{{ 'swaggerSync.onDay' | t }}</span>
+          <p-dropdown
+            [(ngModel)]="customMonthDay"
+            (ngModelChange)="buildCron()"
+            [options]="monthDayOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="compact-dropdown">
+          </p-dropdown>
+        </div>
+
+        <div *ngIf="frequency === 'daily' || frequency === 'weekly' || frequency === 'monthly'" class="builder-row">
+          <span class="builder-lbl">{{ 'swaggerSync.at' | t }}</span>
+          <p-dropdown
+            [(ngModel)]="customHour"
+            (ngModelChange)="buildCron()"
+            [options]="hourOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="compact-dropdown">
+          </p-dropdown>
+          <span class="builder-sep">:</span>
+          <div class="pill-group">
+            <button *ngFor="let m of minutes" class="pill-btn" [class.active]="customMinute === m"
+              (click)="customMinute = m; buildCron()">
+              :{{ m | number:'2.0' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="schedule-preview" *ngIf="cronExpression">
+        <span class="preview-icon">📅</span>
+        <div class="preview-content">
+          <span class="preview-desc">{{ cronLabel }}</span>
+          <code class="preview-cron">{{ cronExpression }}</code>
+        </div>
+      </div>
+
+      <div class="save-row">
+        <button *ngIf="auth.hasPermission('swaggersync.manageschedule')" class="btn-save" [disabled]="savingSchedule()"
+          (click)="saveSchedule()">
+          {{ savingSchedule() ? ('swaggerSync.savingSchedule' | t) : ('swaggerSync.saveSchedule' | t) }}
+        </button>
+        <span *ngIf="scheduleSaved()" class="save-feedback">{{ 'swaggerSync.saved' | t }}</span>
+        <span *ngIf="scheduleError()" class="save-error" role="alert">✗ {{ scheduleError()! | t }}</span>
+      </div>
+    </div>
+  </div>
+  </ng-template>
+
+  <ng-container *ngIf="!isWorkbench">
+  <!-- ── Sync Status Table ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">{{ 'swaggerSync.envStatus' | t }}</span>
+      <button class="btn-refresh" (click)="loadStatus()">{{ 'swaggerSync.refresh' | t }}</button>
+    </div>
+
+    <!-- Global run-all progress banner -->
+    <div *ngIf="running()" class="global-sync-banner">
+      <div class="global-sync-track"><div class="global-sync-fill"></div></div>
+      <span class="global-sync-label">Syncing all environments…</span>
+    </div>
+
+    <app-loading [loading]="loadingStatus()"></app-loading>
+    <p *ngIf="readError() as message" role="alert">{{ message | t }}</p>
+    <p *ngIf="organization.structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+    <div *ngIf="!loadingStatus()">
+      <div *ngIf="!statusList().length" class="empty-state">
+        {{ 'swaggerSync.noEnvs' | t }}
+      </div>
+
+      <div *ngIf="statusList().length" class="status-table">
+        <div class="status-row header-row">
+          <div class="col-env">{{ 'swaggerSync.col.env' | t }}</div>
+          <div class="col-system">{{ 'swaggerSync.col.system' | t }}</div>
+          <div class="col-status">{{ 'swaggerSync.col.status' | t }}</div>
+          <div class="col-counts">{{ 'swaggerSync.col.changes' | t }}</div>
+          <div class="col-total">{{ 'swaggerSync.col.total' | t }}</div>
+          <div class="col-time">{{ 'swaggerSync.col.lastSync' | t }}</div>
+          <div class="col-action"></div>
+        </div>
+
+        <div *ngFor="let s of statusList()" class="status-row" [class.is-syncing]="syncingEnvId() === s.environmentId">
+          <div class="col-env">
+            <span class="env-name">{{ organization.structuralOnly() ? s.environmentId : s.environmentName }}</span>
+          </div>
+          <div class="col-system text-subtle">{{ organization.structuralOnly() ? ('org.structuralOnly' | t) : s.systemName }}</div>
+          <div class="col-status">
+            <!-- Inline progress bar while this env is syncing -->
+            <ng-container *ngIf="syncingEnvId() === s.environmentId; else statusBadge">
+              <div class="row-sync-wrap">
+                <div class="row-sync-track"><div class="row-sync-fill"></div></div>
+                <span class="row-sync-label">Syncing…</span>
+              </div>
+            </ng-container>
+            <ng-template #statusBadge>
+              <span *ngIf="!s.lastStatus" class="badge badge-never">{{ 'swaggerSync.neverSynced' | t }}</span>
+              <span *ngIf="s.lastStatus === 'Success'" class="badge badge-success">✓ Success</span>
+              <span *ngIf="s.lastStatus === 'Failed'" class="badge badge-failed">✗ Failed</span>
+              <span *ngIf="s.lastStatus === 'Partial'" class="badge badge-partial">⚠ Partial</span>
+            </ng-template>
+          </div>
+          <div class="col-counts">
+            <ng-container *ngIf="s.lastStatus">
+              <span class="count-badge new" *ngIf="(s.newEndpoints ?? 0) > 0">+{{ s.newEndpoints }} new</span>
+              <span class="count-badge modified" *ngIf="(s.modifiedEndpoints ?? 0) > 0">~{{ s.modifiedEndpoints }}
+                modified</span>
+              <span class="count-badge deleted" *ngIf="(s.deletedEndpoints ?? 0) > 0">-{{ s.deletedEndpoints }}
+                deleted</span>
+              <span class="text-subtle"
+                *ngIf="!(s.newEndpoints ?? 0) && !(s.modifiedEndpoints ?? 0) && !(s.deletedEndpoints ?? 0)">{{
+                'swaggerSync.noChanges' | t }}</span>
+            </ng-container>
+          </div>
+          <div class="col-total text-subtle">{{ s.totalEndpoints ?? '—' }}</div>
+          <div class="col-time text-subtle">
+            {{ s.lastSyncedAt ? (s.lastSyncedAt | date:'dd/MM/yy HH:mm') : '—' }}
+          </div>
+          <div class="col-action">
+            <button *ngIf="auth.hasPermission('swaggersync.run')" class="btn-sync-env"
+              [disabled]="syncingEnvId() === s.environmentId" (click)="syncEnv(s)">
+              {{ syncingEnvId() === s.environmentId ? '…' : '▶' }}
+            </button>
+            <span *ngIf="s.errorMessage" class="err-icon" [title]="s.errorMessage">⚠</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+          </ng-container>
+
+          <ng-container *ngIf="isWorkbench">
+            <header class="api-workspace-header">
+              <div>
+                <nav class="api-breadcrumb" [attr.aria-label]="'swaggerWorkspace.context' | t">
+                  <span>{{ organization.structuralOnly() ? organization.activeOrganization()?.id : organization.activeOrganization()?.name }}</span>
+                  <i class="pi pi-angle-right" aria-hidden="true"></i><span>Swagger</span>
+                </nav>
+                <h1>{{ 'swaggerWorkspace.title' | t }}</h1>
+                <p>{{ 'swaggerWorkspace.subtitle' | t }}</p>
+              </div>
+              <div class="api-header-actions">
+                <button class="api-button" (click)="loadStatus()" [disabled]="loadingStatus()"><i class="pi pi-refresh" aria-hidden="true"></i>{{ 'swaggerSync.refresh' | t }}</button>
+                <button *ngIf="canSchedule()" class="api-button" (click)="showSchedule.set(true)"><i class="pi pi-clock" aria-hidden="true"></i>{{ 'swaggerSync.schedule' | t }}</button>
+                <button *ngIf="canRun()" class="api-button primary" [disabled]="running()" (click)="runNow()">
+                  <i [class]="running() ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" aria-hidden="true"></i>{{ (running() ? 'swaggerSync.running' : 'swaggerSync.runAllNow') | t }}
+                </button>
+              </div>
+            </header>
+            <div *ngIf="organization.structuralOnly()" class="api-notice" role="note"><i class="pi pi-lock" aria-hidden="true"></i>{{ 'org.structuralOnly' | t }}</div>
+            <div *ngIf="actionError()" class="api-notice error" role="alert">{{ actionError()! | t }}</div>
+            <div *ngIf="running()" class="api-notice" role="status"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i>{{ 'swaggerSync.running' | t }}</div>
+
+            <div class="api-documentation-layout">
+              <aside class="api-source-navigation" [attr.aria-label]="'swaggerWorkspace.sources' | t">
+                <div class="api-source-heading"><h2>{{ 'workspace.explorer' | t }}</h2><span>{{ statusList().length }}</span></div>
+                <label class="api-source-search"><i class="pi pi-search" aria-hidden="true"></i>
+                  <input type="search" [ngModel]="sourceSearch()" (ngModelChange)="sourceSearch.set($event)"
+                    [placeholder]="'swaggerWorkspace.search' | t" [attr.aria-label]="'swaggerWorkspace.search' | t">
+                </label>
+                <div class="source-explorer-tabs">
+                  <button (click)="activeTab.set('documentation')" [class.active]="activeTab() === 'documentation'">{{ 'swaggerWorkspace.sources' | t }}</button>
+                  <button (click)="activeTab.set('endpoints')" [class.active]="activeTab() === 'endpoints'">{{ 'swaggerWorkspace.generatedEndpoints' | t }}</button>
+                </div>
+                <div class="api-source-label">{{ 'swaggerWorkspace.sources' | t }}</div>
+                <app-loading [loading]="loadingStatus()"></app-loading>
+                <p *ngIf="readError()" class="api-inline-error" role="alert">{{ readError()! | t }}</p>
+                <nav *ngIf="!readError()" class="api-source-list">
+                  <button *ngFor="let source of visibleSources(); trackBy: trackSource" class="api-source-row"
+                    [class.active]="sourceKey(source) === selectedKey()" [attr.aria-current]="sourceKey(source) === selectedKey() ? 'true' : null"
+                    (click)="selectSource(source)">
+                    <i class="pi pi-file" aria-hidden="true"></i>
+                    <span class="source-row-copy">
+                      <strong>{{ organization.structuralOnly() ? (source.swaggerSourceId || source.environmentId) : source.environmentName }}</strong>
+                      <small>{{ organization.structuralOnly() ? source.environmentId : source.systemName }}</small>
+                    </span>
+                    <span class="source-sync-dot" [attr.data-status]="source.lastStatus" [title]="source.lastStatus || ('swaggerSync.neverSynced' | t)"></span>
+                  </button>
+                </nav>
+                <p *ngIf="!loadingStatus() && !readError() && !visibleSources().length" class="api-empty-inline">{{ 'swaggerWorkspace.noSources' | t }}</p>
+                <footer>{{ 'swaggerWorkspace.importedOnly' | t }}</footer>
+              </aside>
+
+              <main class="api-source-workspace">
+                <div *ngIf="readError()" class="api-workspace-state" role="alert"><i class="pi pi-lock" aria-hidden="true"></i>
+                  <h2>{{ readError()! | t }}</h2><p>{{ 'swaggerWorkspace.readFailed' | t }}</p>
+                </div>
+                <ng-container *ngIf="!readError()">
+                  <ng-container *ngFor="let source of documentationScopes(); trackBy: trackSource">
+                    <header class="api-source-context">
+                      <div class="api-breadcrumb">
+                        <span>{{ organization.structuralOnly() ? source.environmentId : source.systemName }}</span>
+                        <i class="pi pi-angle-right" aria-hidden="true"></i>
+                        <span>{{ organization.structuralOnly() ? (source.swaggerSourceId || source.environmentId) : source.environmentName }}</span>
+                      </div>
+                      <div class="api-source-title">
+                        <span class="api-source-icon"><i class="pi pi-file" aria-hidden="true"></i></span>
+                        <h2>{{ organization.structuralOnly() ? (source.swaggerSourceId || source.environmentId) : (sourceMetadata()?.label || source.environmentName) }}</h2>
+                        <span class="api-status" [attr.data-status]="source.lastStatus">{{ source.lastStatus || ('swaggerSync.neverSynced' | t) }}</span>
+                        <a *ngIf="canConfigureSources()" class="api-button" routerLink="/workbench/environments">{{ 'swaggerWorkspace.manageSources' | t }}</a>
+                        <button *ngIf="canRun()" class="api-button" [disabled]="syncingEnvId() === source.environmentId" (click)="syncEnv(source)">
+                          <i class="pi pi-sync" aria-hidden="true"></i>{{ (syncingEnvId() === source.environmentId ? 'swaggerSync.running' : 'swaggerWorkspace.syncEnvironment') | t }}
+                        </button>
+                      </div>
+                      <div class="api-source-summary">
+                        <span *ngIf="source.totalEndpoints !== undefined">{{ source.totalEndpoints }} {{ 'endpoints.title' | t }}</span>
+                        <span *ngIf="source.lastSyncedAt">{{ 'swaggerSync.col.lastSync' | t }} {{ source.lastSyncedAt | date:'short' }}</span>
+                        <span *ngIf="!canRun()"><i class="pi pi-lock" aria-hidden="true"></i>{{ 'swaggerWorkspace.syncRestricted' | t }}</span>
+                      </div>
+                      <nav class="api-workspace-tabs" [attr.aria-label]="'swaggerWorkspace.sections' | t">
+                        <button [class.active]="activeTab() === 'documentation'" (click)="activeTab.set('documentation')">{{ 'workspace.documentation' | t }}</button>
+                        <button [class.active]="activeTab() === 'endpoints'" (click)="activeTab.set('endpoints')">{{ 'swaggerWorkspace.generatedEndpoints' | t }}</button>
+                        <button [class.active]="activeTab() === 'source'" (click)="activeTab.set('source')">{{ 'swaggerWorkspace.sourceDetails' | t }}</button>
+                        <button [class.active]="activeTab() === 'synchronization'" (click)="openSynchronization()">{{ 'swaggerWorkspace.synchronization' | t }}</button>
+                      </nav>
+                    </header>
+                    <section [hidden]="activeTab() !== 'documentation' && activeTab() !== 'endpoints'" class="api-documentation">
+                      <div *ngIf="canReadDocumentation()" class="documentation-three-zone">
+                        <section class="imported-documentation">
+                          <div class="documentation-heading"><h3>{{ 'workspace.documentation' | t }}</h3><span>{{ 'swaggerWorkspace.imported' | t }}</span></div>
+                          <app-endpoint-list #catalog [documentationOnly]="true" [showDocumentationExplorer]="activeTab() === 'endpoints'" [scopeEnvironmentId]="source.environmentId"
+                            [scopeSourceId]="source.swaggerSourceId || ''"></app-endpoint-list>
+                        </section>
+                        <aside class="source-inspector">
+                          <div class="source-inspector-heading"><h3>{{ 'swaggerWorkspace.sourceDetails' | t }}</h3>
+                            <button class="api-button" (click)="activeTab.set('source')"><i class="pi pi-arrow-up-right" aria-hidden="true"></i>{{ 'swaggerWorkspace.inspect' | t }}</button>
+                          </div>
+                          <section class="source-sync-context" [attr.data-status]="source.lastStatus">
+                            <strong>{{ source.lastStatus || ('swaggerSync.neverSynced' | t) }}</strong>
+                            <span *ngIf="source.lastSyncedAt">{{ source.lastSyncedAt | date:'short' }}</span>
+                            <p>{{ 'swaggerWorkspace.latestSync' | t }}</p>
+                          </section>
+                          <section class="inspector-section" *ngIf="!catalog.errorKey()">
+                            <h4>{{ 'swaggerWorkspace.generatedEndpoints' | t }}</h4>
+                            <button *ngFor="let endpoint of catalog.endpoints().slice(0, 6)" class="inspector-endpoint"
+                              [class.active]="catalog.activeEndpoint()?.id === endpoint.id" (click)="catalog.selectEndpoint(endpoint)">
+                              <span class="inspector-method" [attr.data-method]="endpoint.method">{{ endpoint.method }}</span>
+                              <code>{{ organization.structuralOnly() ? endpoint.id : endpoint.path }}</code>
+                              <span *ngIf="endpoint.changeStatus !== 'Unchanged'" class="api-status">{{ endpoint.changeStatus }}</span>
+                            </button>
+                            <button class="inspector-link" (click)="activeTab.set('endpoints')">{{ 'swaggerWorkspace.browseEndpoints' | t }} ({{ catalog.total() }})</button>
+                          </section>
+                          <section class="inspector-section">
+                            <h4>{{ 'swaggerWorkspace.synchronization' | t }}</h4>
+                            <div class="sync-timeline">
+                              <span class="source-sync-dot" [attr.data-status]="source.lastStatus"></span>
+                              <div><strong>{{ source.lastStatus || ('swaggerSync.neverSynced' | t) }}</strong>
+                                <small *ngIf="source.lastSyncedAt">{{ source.lastSyncedAt | date:'short' }}</small>
+                              </div>
+                            </div>
+                            <button class="inspector-link" (click)="openSynchronization()">{{ 'swaggerWorkspace.inspect' | t }}</button>
+                          </section>
+                          <section class="inspector-section execution-boundary">
+                            <h4>{{ 'swaggerWorkspace.executionControls' | t }}</h4>
+                            <button *ngIf="canRun()" class="api-button" [disabled]="syncingEnvId() === source.environmentId" (click)="syncEnv(source)">{{ 'swaggerWorkspace.syncEnvironment' | t }}</button>
+                            <p>{{ (canRun() ? 'swaggerWorkspace.syncScopeHint' : 'swaggerWorkspace.syncRestricted') | t }}</p>
+                          </section>
+                        </aside>
+                      </div>
+                      <div *ngIf="!canReadDocumentation()" class="api-workspace-state" role="note"><i class="pi pi-lock" aria-hidden="true"></i>
+                        <h2>{{ 'workspace.documentation' | t }}</h2><p>{{ 'swaggerWorkspace.documentationRestricted' | t }}</p>
+                      </div>
+                    </section>
+                    <section *ngIf="activeTab() === 'source'" class="api-metadata-layout">
+                      <section class="api-content-panel">
+                        <h3>{{ 'swaggerWorkspace.sourceDetails' | t }}</h3>
+                        <app-loading [loading]="sourceLoading()"></app-loading>
+                        <p *ngIf="sourceError()" role="alert">{{ sourceError()! | t }}</p>
+                        <dl>
+                          <div><dt>{{ 'workspace.environment' | t }}</dt><dd><code>{{ source.environmentId }}</code></dd></div>
+                          <div *ngIf="source.swaggerSourceId"><dt>{{ 'swaggerWorkspace.sourceId' | t }}</dt><dd><code>{{ source.swaggerSourceId }}</code></dd></div>
+                          <ng-container *ngIf="!organization.structuralOnly()">
+                            <div *ngIf="sourceMetadata()?.url || (!source.swaggerSourceId && source.swaggerUrl)"><dt>{{ 'swaggerWorkspace.documentUrl' | t }}</dt><dd><code>{{ sourceMetadata()?.url || source.swaggerUrl }}</code></dd></div>
+                            <div *ngIf="sourceMetadata()?.baseUrl"><dt>{{ 'runner.target' | t }}</dt><dd><code>{{ sourceMetadata()!.baseUrl }}</code></dd></div>
+                            <div *ngIf="sourceMetadata()?.createdAt"><dt>{{ 'swaggerWorkspace.created' | t }}</dt><dd>{{ sourceMetadata()!.createdAt | date:'short' }}</dd></div>
+                          </ng-container>
+                        </dl>
+                      </section>
+                      <aside class="api-content-panel source-boundary">
+                        <h3>{{ 'swaggerWorkspace.sourceConfiguration' | t }}</h3><p>{{ 'swaggerWorkspace.configurationHint' | t }}</p>
+                        <a *ngIf="auth.hasPermission('environments.view')" routerLink="/workbench/environments" class="api-button">{{ 'workspace.environment' | t }}<i class="pi pi-arrow-right" aria-hidden="true"></i></a>
+                        <p *ngIf="!canReadSources()" role="note">{{ 'swaggerWorkspace.sourceRestricted' | t }}</p>
+                        <p *ngIf="!canConfigureSources()" role="note">{{ 'swaggerWorkspace.configurationRestricted' | t }}</p>
+                      </aside>
+                    </section>
+                    <section *ngIf="activeTab() === 'synchronization'" class="api-metadata-layout">
+                      <section class="api-content-panel">
+                        <h3>{{ 'swaggerWorkspace.synchronization' | t }}</h3>
+                        <dl>
+                          <div><dt>{{ 'swaggerSync.col.status' | t }}</dt><dd>{{ source.lastStatus || ('swaggerSync.neverSynced' | t) }}</dd></div>
+                          <div><dt>{{ 'swaggerSync.col.lastSync' | t }}</dt><dd>{{ source.lastSyncedAt ? (source.lastSyncedAt | date:'short') : '—' }}</dd></div>
+                          <div><dt>{{ 'swaggerSync.col.total' | t }}</dt><dd>{{ source.totalEndpoints ?? '—' }}</dd></div>
+                          <ng-container *ngIf="source.lastStatus">
+                            <div><dt>{{ 'common.new' | t }}</dt><dd>{{ source.newEndpoints ?? 0 }}</dd></div>
+                            <div><dt>{{ 'common.modified' | t }}</dt><dd>{{ source.modifiedEndpoints ?? 0 }}</dd></div>
+                            <div><dt>{{ 'common.deleted' | t }}</dt><dd>{{ source.deletedEndpoints ?? 0 }}</dd></div>
+                          </ng-container>
+                        </dl>
+                        <p *ngIf="!organization.structuralOnly() && source.errorMessage" class="api-inline-error" role="alert">{{ source.errorMessage }}</p>
+                        <section class="environment-history">
+                          <h3>{{ 'swaggerWorkspace.environmentHistory' | t }}</h3>
+                          <p>{{ 'swaggerWorkspace.historyScope' | t }}</p>
+                          <app-loading [loading]="logsLoading()"></app-loading>
+                          <p *ngIf="logsError()" class="api-inline-error" role="alert">{{ logsError()! | t }}</p>
+                          <div *ngIf="!logsLoading() && !logsError()">
+                            <div *ngFor="let log of syncLogs()" class="history-entry">
+                              <span class="api-status" [attr.data-status]="log.status">{{ log.status }}</span>
+                              <time>{{ log.syncedAt | date:'short' }}</time>
+                              <span>{{ log.totalEndpoints }} {{ 'endpoints.title' | t }}</span>
+                              <code *ngIf="organization.structuralOnly()">{{ log.id }}</code>
+                              <p *ngIf="!organization.structuralOnly() && log.errorMessage" role="alert">{{ log.errorMessage }}</p>
+                            </div>
+                            <p *ngIf="!syncLogs().length">{{ 'swaggerWorkspace.noHistory' | t }}</p>
+                            <small *ngIf="logsTotal() > syncLogs().length">{{ syncLogs().length }} / {{ logsTotal() }} {{ 'swaggerWorkspace.records' | t }}</small>
+                          </div>
+                        </section>
+                      </section>
+                      <aside class="api-content-panel source-boundary">
+                        <h3>{{ 'swaggerWorkspace.syncScope' | t }}</h3><p>{{ 'swaggerWorkspace.syncScopeHint' | t }}</p>
+                        <p *ngIf="!canRun()" role="note">{{ 'swaggerWorkspace.syncRestricted' | t }}</p>
+                      </aside>
+                    </section>
+                  </ng-container>
+                  <div *ngIf="!selectedSource()" class="api-workspace-state"><i class="pi pi-file" aria-hidden="true"></i>
+                    <h2>{{ 'swaggerWorkspace.title' | t }}</h2><p>{{ (loadingStatus() ? 'swaggerWorkspace.loading' : 'swaggerWorkspace.selectSource') | t }}</p>
+                  </div>
+                </ng-container>
+              </main>
+            </div>
+          </ng-container>
+</div>

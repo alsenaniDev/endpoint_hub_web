@@ -1,0 +1,19 @@
+    .method-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-family: monospace;
+      min-width: 60px;
+      text-align: center;
+    }
+    .method-get    { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); }
+    .method-post   { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green); }
+    .method-put    { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow); }
+    .method-patch  { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); }
+    .method-delete { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+    .method-head   { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); }
+    .method-options{ background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); }

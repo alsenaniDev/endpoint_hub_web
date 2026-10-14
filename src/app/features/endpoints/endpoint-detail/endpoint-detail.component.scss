@@ -1,0 +1,319 @@
+    .page {
+      padding: 32px;
+    }
+
+    .back-link {
+      margin-bottom: 20px;
+    }
+
+    .back-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link a:hover {
+      color: var(--accent);
+      opacity: 0.75;
+      text-decoration: underline;
+    }
+
+    .endpoint-header {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-hover);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .endpoint-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .endpoint-path {
+      font-family: monospace;
+      font-size: 20px;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .deprecated-badge {
+      background: var(--yellow-bg);
+      color: var(--yellow);
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    .endpoint-summary {
+      color: var(--text-secondary);
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .endpoint-desc {
+      color: var(--text-secondary);
+      margin: 0 0 16px;
+      font-size: 14px;
+    }
+
+    .endpoint-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .endpoint-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-fg);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      background: var(--bg-hover);
+      color: var(--text);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--bg-hover);
+    }
+
+    .tab {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tab-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-hover);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .param-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--bg-hover);
+    }
+
+    .param-table td {
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--bg-base);
+    }
+
+    .param-name {
+      color: var(--text);
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    .location-badge {
+      background: var(--bg-hover);
+      color: var(--blue);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .mono {
+      font-family: monospace;
+      color: var(--green-text);
+    }
+
+    .text-muted {
+      color: var(--text-secondary) !important;
+      font-size: 13px !important;
+    }
+
+    .body-section {
+      margin-bottom: 24px;
+    }
+
+    .content-type-badge {
+      background: var(--bg-hover);
+      color: var(--accent);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .example-section {
+      margin-top: 12px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .response-section {
+      margin-bottom: 20px;
+    }
+
+    .response-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .status-code {
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .status-2 {
+      color: var(--green-text);
+    }
+
+    .status-4 {
+      color: var(--red);
+    }
+
+    .status-5 {
+      color: var(--orange);
+    }
+
+    .response-desc {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .empty-tab {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--bg-hover);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+      .page {
+        padding: 16px;
+      }
+
+      .endpoint-header {
+        padding: 16px;
+      }
+
+      .endpoint-title-row {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .endpoint-path {
+        font-size: 15px;
+      }
+
+      .endpoint-meta {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .endpoint-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .endpoint-actions a,
+      .endpoint-actions button {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+      }
+
+      .tab {
+        white-space: nowrap;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .tab-content {
+        padding: 16px;
+      }
+
+    }

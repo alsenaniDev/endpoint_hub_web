@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TWK Endpoints Hub — User Guide</title>
+    <style>
+        :root {
+            --brand: #2563eb;
+            --brand-light: #2563eb;
+            --brand-soft: #eef4ff;
+            --bg: #ffffff;
+            --text: #17202a;
+            --muted: #5f6c79;
+            --border: #d9e0e7;
+            --code-bg: #eef2f6;
+            --sidebar-bg: #101820;
+            --sidebar-text: #cbd5e1;
+            --sidebar-active: #2563eb;
+            --new: #147a57;
+            --mod: #a15c00;
+            --del: #c7383d;
+            --sidebar-w: 320px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.65;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            overflow-y: auto;
+            padding: 24px 0;
+            z-index: 100;
+        }
+
+        .sidebar .brand {
+            padding: 0 24px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 12px;
+        }
+
+        .sidebar .brand h1 {
+            font-size: 19px;
+            margin: 0 0 4px;
+            color: #fff;
+        }
+
+        .sidebar .brand p {
+            font-size: 12px;
+            margin: 0;
+            color: #64748b;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding: 7px 24px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-size: 13.5px;
+            border-left: 3px solid transparent;
+            transition: background .15s, color .15s, border-color .15s;
+        }
+
+        .sidebar nav a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .sidebar nav a.active {
+            color: #fff;
+            border-left-color: var(--sidebar-active);
+            background: rgba(59, 130, 246, 0.12);
+        }
+
+        .sidebar nav a .num {
+            color: #64748b;
+            display: inline-block;
+            width: 22px;
+        }
+
+        .sidebar nav a.active .num {
+            color: var(--sidebar-active);
+        }
+
+        /* Content */
+        .content {
+            margin-left: var(--sidebar-w);
+            padding: 56px 64px 120px;
+            /* max-width: 900px; */
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: #fff;
+            border-radius: 16px;
+            padding: 40px 44px;
+            margin-bottom: 44px;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: 34px;
+        }
+
+        .hero p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.92;
+        }
+
+        .hero .pills {
+            margin-top: 18px;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 12px;
+            margin: 3px 4px 3px 0;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 12.5px;
+            color: #fff;
+        }
+
+        h2 {
+            font-size: 25px;
+            margin: 52px 0 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            scroll-margin-top: 20px;
+        }
+
+        h2 .sec-num {
+            color: var(--brand);
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin: 28px 0 10px;
+            color: #111827;
+        }
+
+        p {
+            margin: 12px 0;
+        }
+
+        a {
+            color: var(--brand);
+        }
+
+        ul,
+        ol {
+            padding-left: 24px;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-size: 0.88em;
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            color: #b91c1c;
+        }
+
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 18px 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        blockquote {
+            margin: 16px 0;
+            padding: 12px 18px;
+            background: var(--brand-soft);
+            border-left: 4px solid var(--brand);
+            border-radius: 0 8px 8px 0;
+            color: #1e3a5f;
+        }
+
+        blockquote p {
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 14.5px;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 9px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--brand-soft);
+            color: #1e3a5f;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        .tag-new {
+            color: var(--new);
+            font-weight: 600;
+        }
+
+        .tag-mod {
+            color: var(--mod);
+            font-weight: 600;
+        }
+
+        .tag-del {
+            color: var(--del);
+            font-weight: 600;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 40px 0;
+        }
+
+        .back-top {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--brand);
+            color: #fff;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 20px;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s;
+        }
+
+        .back-top.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Mobile */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 200;
+            background: var(--sidebar-bg);
+            color: #fff;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform .25s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .content {
+                margin-left: 0;
+                padding: 72px 24px 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <h1>TWK Endpoints Hub</h1>
+            <p>User Guide</p>
+        </div>
+        <nav id="toc">
+            <a href="#s1"><span class="num">1</span>What is TWK Endpoints Hub?</a>
+            <a href="#s2"><span class="num">2</span>Key Concepts</a>
+            <a href="#s3"><span class="num">3</span>Getting Started</a>
+            <a href="#s4"><span class="num">4</span>Interface at a Glance</a>
+            <a href="#s5"><span class="num">5</span>Dashboard</a>
+            <a href="#s6"><span class="num">6</span>Teams</a>
+            <a href="#s7"><span class="num">7</span>Systems</a>
+            <a href="#s8"><span class="num">8</span>Environments</a>
+            <a href="#s9"><span class="num">9</span>Swagger Sync</a>
+            <a href="#s10"><span class="num">10</span>Endpoints</a>
+            <a href="#s11"><span class="num">11</span>Auth Profiles</a>
+            <a href="#s12"><span class="num">12</span>Favorites &amp; Sharing</a>
+            <a href="#s13"><span class="num">13</span>Embedded Test</a>
+            <a href="#s14"><span class="num">14</span>Governance</a>
+            <a href="#s15"><span class="num">15</span>Notifications</a>
+            <a href="#s16"><span class="num">16</span>Users &amp; Roles</a>
+            <a href="#s17"><span class="num">17</span>Profile &amp; Password</a>
+            <a href="#s18"><span class="num">18</span>Language &amp; Theme</a>
+            <a href="#s19"><span class="num">19</span>Common Workflows</a>
+            <a href="#s20"><span class="num">20</span>Roles &amp; Permissions</a>
+            <a href="#s21"><span class="num">21</span>Troubleshooting &amp; FAQ</a>
+            <a href="#s22"><span class="num">22</span>Glossary</a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <div class="hero" id="top">
+            <h1>TWK Endpoints Hub — User Guide</h1>
+            <p>A complete, step-by-step guide for anyone using the TWK Endpoints Hub. No technical background required —
+                just follow the sections in order.</p>
+            <div class="pills">
+                <span class="pill">API Discovery</span>
+                <span class="pill">Live Testing</span>
+                <span class="pill">Change Tracking</span>
+                <span class="pill">Governance</span>
+                <span class="pill">Real-time Collaboration</span>
+            </div>
+        </div>
+
+        <!-- 1 -->
+        <h2 id="s1"><span class="sec-num">1.</span>What is TWK Endpoints Hub?</h2>
+        <p>TWK Endpoints Hub is a <strong>central portal for discovering, documenting, testing, and governing
+                APIs</strong> across your organization.</p>
+        <p>Instead of hunting through scattered Swagger pages, spreadsheets, and Postman collections, everyone works
+            from one place where they can:</p>
+        <ul>
+            <li><strong>See every API endpoint</strong> across all your teams, systems, and environments.</li>
+            <li><strong>Automatically import</strong> endpoints from Swagger/OpenAPI documents — and keep them up to
+                date.</li>
+            <li><strong>Track what changed</strong> — new, modified, or removed endpoints — over time.</li>
+            <li><strong>Test endpoints live</strong> with saved credentials, right from the browser.</li>
+            <li><strong>Share and favorite</strong> endpoints so teammates find what they need fast.</li>
+            <li><strong>Enforce API standards</strong> ("governance") and measure how compliant each API is.</li>
+            <li><strong>Get real-time notifications</strong> when something is shared with you or a sync completes.</li>
+        </ul>
+        <p>The product has two parts that work together:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Part</th>
+                    <th>What it is</th>
+                    <th>Who touches it</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Web App</strong> (Angular)</td>
+                    <td>The website you log into and click around in.</td>
+                    <td>Everyone</td>
+                </tr>
+                <tr>
+                    <td><strong>API</strong> (.NET)</td>
+                    <td>The engine behind the scenes that stores data, syncs Swagger, runs requests, and sends
+                        notifications.</td>
+                    <td>Admins / IT during setup</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>You only need the <strong>Web App</strong> to use everything in this guide.</p>
+
+        <!-- 2 -->
+        <h2 id="s2"><span class="sec-num">2.</span>Key Concepts (Read This First)</h2>
+        <p>The system is organized as a simple hierarchy. Understanding it makes everything else click:</p>
+        <pre><code>Team
+ └── System            (an application or service, e.g. "Payments Service")
+      └── Environment  (e.g. Dev, Test, Staging, Production)
+           └── Swagger Source   (a versioned OpenAPI document, e.g. "v1", "v2")
+                └── Endpoints    (individual API operations, e.g. GET /orders)</code></pre>
+        <ul>
+            <li><strong>Team</strong> — a group of people (e.g. "Checkout Team"). Owns systems.</li>
+            <li><strong>System</strong> — one application or microservice.</li>
+            <li><strong>Environment</strong> — a deployment of that system: Local, Development, Test, Staging, or
+                Production. Each has a <strong>Base URL</strong> (where requests go) and optionally a <strong>Swagger
+                    URL</strong> (where the API description lives).</li>
+            <li><strong>Swagger Source</strong> — a single OpenAPI/Swagger document. An environment can have several
+                (for example, one per API version).</li>
+            <li><strong>Endpoint</strong> — one API operation, such as <code>GET /api/orders/{id}</code>. These are
+                <strong>imported automatically</strong> from Swagger — you rarely create them by hand.
+            </li>
+            <li><strong>Auth Profile</strong> — a saved set of credentials (token, API key, username/password, etc.)
+                used to call endpoints.</li>
+        </ul>
+        <blockquote>
+            <p><strong>Rule of thumb:</strong> You create Teams → Systems → Environments, point each environment at a
+                Swagger URL, run a <strong>Sync</strong>, and the endpoints appear on their own.</p>
+        </blockquote>
+
+        <!-- 3 -->
+        <h2 id="s3"><span class="sec-num">3.</span>Getting Started</h2>
+        <h3>3.1 Signing In</h3>
+        <ol>
+            <li>Open the web app in your browser (ask your admin for the URL, e.g. <code>http://localhost:4200</code> in
+                development).</li>
+            <li>On the <strong>Login</strong> screen, enter your <strong>email/username</strong> and
+                <strong>password</strong>.
+            </li>
+            <li>Click <strong>Sign in</strong>. Choose an organization you belong to, then continue to a workspace
+                available under your verified membership and permissions.</li>
+        </ol>
+        <h3>3.2 Creating an Account (Self-Registration)</h3>
+        <p>If self-registration is enabled:</p>
+        <ol>
+            <li>On the login screen, switch to <strong>Register</strong>.</li>
+            <li>Fill in the required <strong>Username</strong> and <strong>Email</strong>, and choose a
+                <strong>Password</strong> (at least 6 characters). Full name is optional; password confirmation is
+                checked before submission.
+            </li>
+            <li>Click <strong>Create account</strong>. If registration succeeds, you are signed in and can choose an
+                organization.</li>
+        </ol>
+        <blockquote>
+            <p>If you can't register, an administrator needs to create your account (see <a href="#s16">Users &amp;
+                    Roles</a>).</p>
+        </blockquote>
+        <h3>3.3 First-Time Checklist for a New Workspace</h3>
+        <p>If you're setting the portal up from scratch, do this in order:</p>
+        <ol>
+            <li><strong>Create a Team</strong> → <a href="#s6">Section 6</a></li>
+            <li><strong>Create a System</strong> under that team → <a href="#s7">Section 7</a></li>
+            <li><strong>Create an Environment</strong> and add its <strong>Swagger URL</strong> → <a href="#s8">Section
+                    8</a></li>
+            <li><strong>Run a Swagger Sync</strong> to import endpoints → <a href="#s9">Section 9</a></li>
+            <li><strong>Create an Auth Profile</strong> so you can test endpoints → <a href="#s11">Section 11</a></li>
+            <li><strong>Browse the Endpoints</strong> and try running one → <a href="#s10">Section 10</a></li>
+        </ol>
+
+        <!-- 4 -->
+        <h2 id="s4"><span class="sec-num">4.</span>The Interface at a Glance</h2>
+        <p>The application and Workbench share the Endpoints Hub color system: a neutral canvas
+            (<code>#F4F6F8</code>), white surfaces, dark ink (<code>#17202A</code>), blue actions
+            (<code>#2563EB</code>), and dark code surfaces (<code>#101820</code>).
+            Green indicates success, amber indicates warnings, and red indicates danger.
+            Small secondary labels and success messages use slightly darker variants for readable contrast.
+            The theme toggle retains the existing dark palette, with its existing blue used for the product accent;
+            a separate Figma dark-mode reference is still required for exact dark-theme matching.</p>
+        <p><strong>Workbench Settings — Members and access:</strong> open
+            <code>/workbench/settings/members</code> to inspect the active organization's existing member directory.
+            Search by name, username or organization role, filter by directory role, and select a member to inspect
+            membership details. The Roles tab shows roles used by valid members, not the global role catalogue.
+            The access-context panel describes your own live membership, not the selected member's effective permissions.</p>
+        <p>This directory is read-only for all current roles: invitation sending, role changes and member removal
+            are unavailable. Platform <code>users.manage</code> does not authorize organization member management.
+            Structural read-only members see identifiers instead of protected names and descriptions.
+            Organization switching clears previous directory selections. The legacy <code>/organizations</code>
+            page remains available with its existing organization-discovery and switching controls.</p>
+        <p><strong>Workbench Notifications — Action Center:</strong> open
+            <code>/workbench/notifications</code> to browse the recent notifications returned for the active organization.
+            Use the unread filter or the notification types supplied by the service, search message/type/reference text,
+            and select an item to inspect its actual message, type, timestamp and optional related record.
+            Mark-read actions remain subject to the existing organization mutation capability. Opening a share notice
+            follows the existing shared-endpoints route. Counts apply only to the loaded recent list.
+            Preference controls and unsupported actor/source/severity fields or workflow actions are not fabricated.</p>
+        <p>After logging in you'll see three areas:</p>
+        <ul>
+            <li><strong>Sidebar (left)</strong> — the main menu. Items shown depend on your permissions: Dashboard,
+                Teams, Users, Systems, Environments, Endpoints, Swagger Sync, Auth Profiles, Embedded Test, Governance.
+            </li>
+            <li><strong>Header (top)</strong> — contains the <strong>notification bell</strong>, <strong>theme
+                    toggle</strong> (light/dark), and <strong>language switcher</strong> (English/Arabic).</li>
+            <li><strong>Main area</strong> — where the selected page appears.</li>
+        </ul>
+        <p>On mobile, the sidebar collapses into a <strong>hamburger menu</strong>, and floating buttons give quick
+            access to theme and language.</p>
+
+        <!-- 5 -->
+        <h2 id="s5"><span class="sec-num">5.</span>Dashboard</h2>
+        <p>The Dashboard is your at-a-glance overview. It shows:</p>
+        <ul>
+            <li><strong>Totals:</strong> number of teams, systems, environments, and endpoints.</li>
+            <li><strong>Unique endpoints:</strong> distinct path + method combinations per system.</li>
+            <li><strong>Change counts:</strong> how many endpoints are <span class="tag-new">New</span>, <span
+                    class="tag-mod">Modified</span>, or <span class="tag-del">Deleted</span> since the last sync.</li>
+            <li><strong>Broken Swagger URLs:</strong> environments whose Swagger document couldn't be fetched — a quick
+                health signal.</li>
+            <li><strong>Endpoints by Environment:</strong> expandable groups (System → Environment) with counts.</li>
+            <li><strong>Recent Syncs:</strong> the latest 10 sync runs with status (Success / Failed / Partial),
+                timestamp, and any error messages.</li>
+        </ul>
+        <p>Use it to spot problems (broken URLs, failed syncs) and to see what changed recently.</p>
+
+        <!-- 6 -->
+        <h2 id="s6"><span class="sec-num">6.</span>Teams</h2>
+        <p>Teams are the top of the hierarchy. <strong>Menu → Teams</strong>.</p>
+        <p><strong>View:</strong> a table of teams showing name, description, contact email, Slack channel, number of
+            systems, and created date.</p>
+        <p><strong>Create a team:</strong></p>
+        <ol>
+            <li>Click <strong>Add Team</strong>.</li>
+            <li>Fill in <strong>Name</strong>, <strong>Description</strong>, <strong>Contact Email</strong>, and
+                <strong>Slack Channel</strong>.
+            </li>
+            <li>Click <strong>Save</strong>.</li>
+        </ol>
+        <p><strong>Edit / Delete:</strong> use the row actions. Deleting a team is confirmed first.</p>
+        <blockquote>
+            <p>Creating or editing teams usually requires the <code>teams.manage</code> permission.</p>
+        </blockquote>
+
+        <!-- 7 -->
+        <h2 id="s7"><span class="sec-num">7.</span>Systems</h2>
+        <p>A System is one application or service, belonging to a team. <strong>Menu → Systems</strong>.</p>
+        <p><strong>Filter:</strong> by team, or search by name.</p>
+        <p><strong>Table shows:</strong> system name, description, team, owner (name/email), repository URL, environment
+            count, created date.</p>
+        <p><strong>Create a system:</strong></p>
+        <ol>
+            <li>Click <strong>Add System</strong>.</li>
+            <li>Choose the <strong>Team</strong>, enter a <strong>Name</strong> and <strong>Description</strong>.</li>
+            <li>Add <strong>Owner</strong> details and the <strong>Repository URL</strong> (optional but recommended).
+            </li>
+            <li>Click <strong>Save</strong>.</li>
+        </ol>
+        <p><strong>Edit / Delete:</strong> row actions. <strong>Deleting a system also removes its environments and
+                endpoints</strong> — you'll be warned first.</p>
+
+        <!-- 8 -->
+        <h2 id="s8"><span class="sec-num">8.</span>Environments</h2>
+        <p>Environments are deployments of a system (Dev, Test, Staging, Production…). <strong>Menu →
+                Environments</strong>.</p>
+        <p><strong>Filter:</strong> by system, by environment type, by status (Active/Inactive), or search by name.
+            Environments are grouped by system.</p>
+        <p><strong>Create an environment:</strong></p>
+        <ol>
+            <li>Click <strong>Add Environment</strong>.</li>
+            <li>Select the <strong>System</strong> and enter a <strong>Name</strong> (e.g. "Development").</li>
+            <li>Choose the <strong>Type</strong>: Local, Development, Test, Staging, or Production.</li>
+            <li>Enter the <strong>Base URL</strong> — where live requests are sent (e.g.
+                <code>https://api-dev.example.com</code>).
+            </li>
+            <li>Optionally enter the <strong>Swagger URL</strong> — the OpenAPI/Swagger JSON document to import
+                endpoints from.</li>
+            <li>Set <strong>Active</strong> on, then <strong>Save</strong>.</li>
+        </ol>
+        <p><strong>Single URL vs. Multi-Source:</strong></p>
+        <ul>
+            <li><strong>Single URL</strong> — one Swagger document for the environment (the simple case).</li>
+            <li><strong>Multi-Source</strong> — multiple <strong>Swagger Sources</strong> (e.g. one per API version).
+                Switch to the multi-source tab to add several labeled sources, each with its own Swagger URL and base
+                URL.</li>
+        </ul>
+        <p><strong>Per-environment actions:</strong> view the last sync status, trigger a <strong>manual sync</strong>,
+            edit, or delete.</p>
+
+        <!-- 9 -->
+        <h2 id="s9"><span class="sec-num">9.</span>Swagger Sync (Importing APIs)</h2>
+        <p>Swagger Sync is what fills the portal with endpoints — automatically. <strong>Menu → Swagger Sync</strong>
+            (requires <code>swaggersync.view</code>).</p>
+        <h3>9.1 What a Sync Does</h3>
+        <ol>
+            <li>Fetches the Swagger/OpenAPI document from each environment's Swagger URL.</li>
+            <li>Reads every path, method, parameter, header, request body, and response.</li>
+            <li>Compares against what's already stored and marks each endpoint as <span class="tag-new">New</span>,
+                <span class="tag-mod">Modified</span>, <span class="tag-del">Deleted</span>, or Unchanged.
+            </li>
+            <li>Saves a <strong>change history</strong> snapshot so you can see exactly what changed.</li>
+            <li>Records a <strong>sync log</strong> (status + counts) and notifies users in real time.</li>
+        </ol>
+        <h3>9.2 Running a Sync Manually</h3>
+        <ul>
+            <li>On the <strong>Swagger Sync</strong> page, find the environment and click its <strong>Sync</strong>
+                button (a spinner shows while it runs).</li>
+            <li>Or trigger syncs for individual environments from the <strong>Environments</strong> page.</li>
+        </ul>
+        <h3>9.3 Scheduling Automatic Syncs</h3>
+        <p>To keep endpoints fresh without manual effort (requires <code>swaggersync.manageschedule</code>):</p>
+        <ol>
+            <li>Open the <strong>Schedule</strong> section on the Swagger Sync page.</li>
+            <li>Pick a <strong>Quick Preset</strong> (Every hour, Every 6 hours, Daily at 2 AM, …) <strong>or</strong>
+                build a <strong>custom frequency</strong> (hourly / every N hours / daily / weekly / monthly with a time
+                or day).</li>
+            <li>Turn the <strong>schedule toggle</strong> on.</li>
+            <li>Click <strong>Save</strong>. The portal now syncs on that schedule in the background.</li>
+        </ol>
+        <h3>9.4 Reading Sync Results</h3>
+        <p>Each environment shows its <strong>last status</strong> (Success / Failed / Partial), the sync date, and
+            counts of new/modified/deleted endpoints. Failed syncs show an error message (a common cause is an
+            unreachable or invalid Swagger URL).</p>
+
+        <!-- 10 -->
+        <h2 id="s10"><span class="sec-num">10.</span>Endpoints — Browse, View, Run</h2>
+        <p>The Endpoints area is the heart of the portal. <strong>Menu → Endpoints</strong>.</p>
+        <h3>10.1 Browsing &amp; Filtering</h3>
+        <p>Filter the endpoint list by:</p>
+        <ul>
+            <li><strong>System</strong>, <strong>Environment</strong>, and <strong>Swagger Source</strong></li>
+            <li><strong>HTTP Method</strong> (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)</li>
+            <li><strong>Tag</strong></li>
+            <li><strong>Change Status</strong> (New, Modified, Deleted, Unchanged)</li>
+        </ul>
+        <p>Display options:</p>
+        <ul>
+            <li><strong>Grouped view</strong> — System → Environment → Tag (expandable tree).</li>
+            <li><strong>Favorites only</strong>, <strong>Shared with me only</strong>, and <strong>New sharing
+                    only</strong> toggles.</li>
+            <li><strong>Multi-select mode</strong> — tick checkboxes to share several endpoints at once.</li>
+        </ul>
+        <p>Each row shows a <strong>color-coded method badge</strong>, the path, summary, tag, change status,
+            last-synced date, a <strong>favorite star</strong>, a <strong>share</strong> indicator, and a <strong>copy
+                path</strong> button.</p>
+        <h3>10.2 Endpoint Detail</h3>
+        <p>Click any endpoint to open its detail page, with tabs for:</p>
+        <ul>
+            <li><strong>Parameters</strong> — query, path, header, and cookie parameters (name, required, schema,
+                example).</li>
+            <li><strong>Headers</strong> — accepted headers and defaults.</li>
+            <li><strong>Request Body</strong> — content type + schema with a formatted JSON example.</li>
+            <li><strong>Responses</strong> — every status code with its schema.</li>
+            <li><strong>Notes</strong> — free-text notes plus a <strong>"Used in Pages"</strong> field so you can
+                document where the endpoint is used. Editable if you have <code>endpoints.manage</code>.</li>
+            <li><strong>Default Auth Profile</strong> — choose which credentials this endpoint uses when tested.</li>
+        </ul>
+        <h3>10.3 Running an Endpoint (Live Test)</h3>
+        <p>From an endpoint, open <strong>Run</strong> (requires <code>endpoints.run</code>):</p>
+        <ol>
+            <li>Optionally override the <strong>Base URL</strong>.</li>
+            <li>Pick an <strong>Auth Profile</strong> (or None).</li>
+            <li>Fill in <strong>Route Parameters</strong> and <strong>Query Parameters</strong> (pre-filled from the
+                schema's examples).</li>
+            <li>Add or edit <strong>Custom Headers</strong> (key/value rows).</li>
+            <li>For POST/PUT/PATCH, edit the <strong>Request Body</strong> (a skeleton is generated for you).</li>
+            <li><em>(Optional)</em> Turn on <strong>Mock Mode</strong> to return a chosen status code and body without
+                calling the real service.</li>
+            <li>Click <strong>Execute</strong>.</li>
+        </ol>
+        <p>The <strong>Response panel</strong> shows the status code (color-coded), response time in ms, response
+            headers, and a formatted JSON body you can copy. Real requests are saved to the endpoint's <strong>request
+                history</strong>.</p>
+        <h3>10.4 Change History</h3>
+        <p>Open <strong>History</strong> on an endpoint to see a timeline of changes (New / Modified / Deleted) with
+            timestamps and a <strong>diff viewer</strong> (side-by-side, previous, or new snapshot; raw JSON toggle
+            available).</p>
+        <h3>10.5 Generate Client Code</h3>
+        <p>Open <strong>Code</strong> on an endpoint to auto-generate <strong>TypeScript interfaces</strong> and an
+            <strong>Angular service method</strong> for it. Copy each block with one click.
+        </p>
+        <h3>10.6 Export Documentation</h3>
+        <p>You can export endpoint documentation (e.g. to PDF) filtered by system, environment, and tag — handy for
+            sharing with people who don't use the portal (requires <code>export.view</code>).</p>
+
+        <!-- 11 -->
+        <h2 id="s11"><span class="sec-num">11.</span>Auth Profiles (Credentials)</h2>
+        <p>Auth Profiles store the credentials used to call endpoints, <strong>encrypted at rest</strong>. <strong>Menu
+                → Auth Profiles</strong> (view needs <code>authprofiles.view</code>, editing needs
+            <code>authprofiles.manage</code>).
+        </p>
+        <p><strong>Supported types:</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Use it when…</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>No Auth</strong></td>
+                    <td>The endpoint needs no credentials.</td>
+                </tr>
+                <tr>
+                    <td><strong>Bearer Token</strong></td>
+                    <td>You have a token to send in the <code>Authorization</code> header.</td>
+                </tr>
+                <tr>
+                    <td><strong>API Key</strong></td>
+                    <td>The API expects a key in a custom header (e.g. <code>X-API-Key</code>).</td>
+                </tr>
+                <tr>
+                    <td><strong>Basic Auth</strong></td>
+                    <td>You have a username + password.</td>
+                </tr>
+                <tr>
+                    <td><strong>Custom Header</strong></td>
+                    <td>Any single custom header/value.</td>
+                </tr>
+                <tr>
+                    <td><strong>Auto Login Token</strong></td>
+                    <td>The token must be fetched by logging in first (see below).</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><strong>Create a profile:</strong></p>
+        <ol>
+            <li>Click <strong>Add</strong>, give it a <strong>Name</strong> and <strong>Description</strong>.</li>
+            <li>Scope it to a <strong>System</strong> and/or <strong>Environment</strong>.</li>
+            <li>Choose the <strong>Type</strong> and fill the type-specific fields.</li>
+            <li>Optionally add <strong>extra headers</strong>, choose a <strong>pre-auth profile</strong> (to chain
+                logins), and set it as <strong>default</strong>.</li>
+            <li><strong>Save</strong>.</li>
+        </ol>
+        <p><strong>Auto Login Token</strong> (for APIs that require logging in to get a token): provide the
+            <strong>login URL</strong>, <strong>method</strong>, a <strong>request-body template</strong>, the
+            <strong>JSON path</strong> to the token in the response (e.g. <code>data.accessToken</code>), an optional
+            <strong>prefix</strong> (e.g. <code>Bearer</code>), and an <strong>expiry</strong> in seconds. The portal
+            fetches the token automatically and refreshes it when it's about to expire.
+        </p>
+        <p><strong>Test a profile:</strong> click <strong>Test</strong> to validate the credentials. For auto-login, it
+            performs the login and shows the extracted token, generated headers, response status, and timing — with a
+            button to copy the token.</p>
+
+        <!-- 12 -->
+        <h2 id="s12"><span class="sec-num">12.</span>Favorites &amp; Sharing</h2>
+        <ul>
+            <li><strong>Favorite</strong> an endpoint by clicking its <strong>star</strong>. Filter to <strong>Favorites
+                    only</strong> to find them fast.</li>
+            <li><strong>Share</strong> endpoints with teammates: enter multi-select mode, pick endpoints, open the
+                <strong>Share</strong> panel, and choose to share with a <strong>specific user</strong>, <strong>your
+                    team</strong>, or <strong>multiple teams</strong>. You can also <strong>share all your
+                    favorites</strong> at once.
+            </li>
+            <li>Recipients see the endpoints under <strong>Shared with me</strong>, flagged <span
+                    class="tag-new">New</span> until they mark them seen, and get a <strong>real-time
+                    notification</strong>.</li>
+        </ul>
+
+        <!-- 13 -->
+        <h2 id="s13"><span class="sec-num">13.</span>Embedded Test (Quick Tester)</h2>
+        <p>A lightweight tool for testing any HTTP URL without setting up systems/environments. <strong>Menu → Embedded
+                Test</strong>.</p>
+        <p><strong>Manual request:</strong></p>
+        <ol>
+            <li>Choose a <strong>method</strong> (GET/POST/PUT/PATCH/DELETE).</li>
+            <li>Enter a <strong>URL</strong> (must start with <code>http</code>/<code>https</code>).</li>
+            <li>Paste an <strong>Auth Token</strong>.</li>
+            <li>For methods with a body, enter <strong>JSON</strong> (validated as you type).</li>
+            <li>Click <strong>Send</strong> and view the status, timing, headers, and body.</li>
+        </ol>
+        <p><strong>Get Token panel:</strong> fetch a token by calling a login endpoint — pick an auth profile or enter a
+            URL/body, specify the <strong>JSON path</strong> to the token, choose whether to prefix it (e.g.
+            <code>Bearer</code>), then <strong>Fetch Token</strong> and copy the result.
+        </p>
+        <p><strong>Saved tests:</strong> save the current request under a name; later <strong>load</strong>,
+            <strong>rename</strong>, or <strong>delete</strong> it. Saved tests are private to you.
+        </p>
+
+        <!-- 14 -->
+        <h2 id="s14"><span class="sec-num">14.</span>Governance (API Standards)</h2>
+        <p>Governance lets you define <strong>standards</strong> your APIs should follow and measure compliance.
+            <strong>Menu → Governance</strong> (Beta; requires <code>governance.view</code>).
+        </p>
+        <h3>14.1 Standards</h3>
+        <p>The Workbench presentation is available at <code>/workbench/governance</code>, using the same
+            standards and authorization as the legacy <code>/governance</code> route. Select a standard in the
+            resource explorer, inspect its policies in the compact rule table, and select a rule to read its
+            configuration. The <strong>Assigned resources</strong> tab shows existing scope assignments;
+            <strong>Validation results</strong> and the evidence panel link to recorded reports.
+            Opening these views does not run validation. Active/inactive describes configuration, not compliance.</p>
+        <p>Standard, rule and assignment changes require <code>governance.manage</code>; running validation requires
+            <code>governance.run</code> and a mutation-eligible organization membership. Structural read-only members
+            see resource identifiers instead of protected policy text and configuration. Workbench forms use
+            side drawers; the legacy presentation remains available.</p>
+        <p>Create a <strong>Standard</strong> (e.g. "REST Best Practices") with a name, description, and active toggle.
+            The list shows rule and assignment counts per standard.</p>
+        <h3>14.2 Rules</h3>
+        <p>Inside a standard, add <strong>Rules</strong>. Each rule has:</p>
+        <ul>
+            <li><strong>Type:</strong> Regex, Required Field, Response Schema, HTTP Method, Status Code, Custom
+                Expression, or Pagination.</li>
+            <li><strong>Target:</strong> what it checks — Path, Method, Summary, Description, Tag, Operation ID,
+                Response Schema, Status Code, Parameters, Security, or Headers.</li>
+            <li><strong>Severity:</strong> Info, Warning, Error, or Critical.</li>
+            <li><strong>Expression:</strong> the pattern/config, plus an optional <strong>error message</strong> and
+                <strong>suggested fix</strong>.
+            </li>
+        </ul>
+        <p>Example rules: "every endpoint must have a tag", "list endpoints must support pagination", "responses must
+            include a success field".</p>
+        <h3>14.3 Assignments</h3>
+        <p>Assign a standard to a <strong>scope</strong>: a Team, System, Environment, or Swagger Source. Assignments
+            cascade down the hierarchy, so a standard on a system covers all its environments and endpoints.</p>
+        <h3>14.4 Running a Validation</h3>
+        <ol>
+            <li>Go to <strong>Validate</strong>, pick a <strong>standard</strong>.</li>
+            <li>Choose a <strong>scope</strong> (All, Team, System, Environment, or a single Endpoint).</li>
+            <li>Click <strong>Run</strong>.</li>
+        </ol>
+        <p>You get an <strong>overall compliance score</strong> (green ≥80%, yellow ≥50%, red &lt;50%) with
+            passed/failed counts.</p>
+        <h3>14.5 Compliance Report</h3>
+        <p>Open the run's <strong>report</strong> to see a severity breakdown and per-endpoint results. Expand any
+            endpoint to view each violation: the rule, severity, message, suggested fix, and pass/fail/skip status.
+            Filter by severity or search by path.</p>
+
+        <!-- 15 -->
+        <h2 id="s15"><span class="sec-num">15.</span>Notifications</h2>
+        <p>The <strong>bell</strong> in the header shows your unread count and a dropdown of recent notifications.
+            You'll be notified in <strong>real time</strong> when:</p>
+        <ul>
+            <li>Someone <strong>shares</strong> endpoints with you.</li>
+            <li>A <strong>sync</strong> you care about completes.</li>
+            <li>A <strong>governance validation</strong> finishes.</li>
+        </ul>
+        <p>Click a notification to mark it read, or use <strong>Mark all read</strong>. Toast pop-ups appear briefly for
+            new events.</p>
+
+        <!-- 16 -->
+        <h2 id="s16"><span class="sec-num">16.</span>Users &amp; Roles (Admin)</h2>
+        <p>Administrators manage accounts under <strong>Menu → Users</strong> (requires <code>users.manage</code>).</p>
+        <p><strong>Filter:</strong> search by username/email/full name, or filter by role or team.</p>
+        <p><strong>Create a user:</strong> provide username, email, a password (6+ characters), full name, a
+            <strong>role</strong>, and (for Developers) an optional <strong>team</strong>.
+        </p>
+        <p><strong>Edit:</strong> change a user's <strong>role</strong> and <strong>team</strong>.
+            <strong>Delete:</strong> removes the account (confirmed first).
+        </p>
+
+        <!-- 17 -->
+        <h2 id="s17"><span class="sec-num">17.</span>Your Profile &amp; Password</h2>
+        <p><strong>Menu → Profile</strong> (or your avatar).</p>
+        <ul>
+            <li><strong>Profile:</strong> update your <strong>username</strong> and <strong>full name</strong> (email,
+                role, and team are read-only). Shows last login and created date.</li>
+            <li><strong>Change Password:</strong> enter your current password, then a new password (6+ characters)
+                twice. Click <strong>Change Password</strong>.</li>
+        </ul>
+
+        <!-- 18 -->
+        <h2 id="s18"><span class="sec-num">18.</span>Language &amp; Theme</h2>
+        <ul>
+            <li><strong>Language:</strong> switch between <strong>English</strong> and <strong>Arabic</strong> from the
+                header. Arabic switches the whole layout to <strong>right-to-left (RTL)</strong>.</li>
+            <li><strong>Theme:</strong> toggle <strong>light/dark mode</strong> from the header. Your choice is
+                remembered.</li>
+        </ul>
+
+        <!-- 19 -->
+        <h2 id="s19"><span class="sec-num">19.</span>Common Workflows (Recipes)</h2>
+        <p><strong>A. Onboard a brand-new API</strong><br />
+            Teams → add team → Systems → add system → Environments → add environment with Swagger URL → Swagger Sync →
+            run sync → Endpoints appear.</p>
+        <p><strong>B. Test an endpoint end-to-end</strong><br />
+            Auth Profiles → create a profile → Endpoints → open endpoint → Run → pick the profile, fill params/body →
+            Execute → read the response.</p>
+        <p><strong>C. Keep documentation current automatically</strong><br />
+            Swagger Sync → Schedule → pick a preset (e.g. Daily at 2 AM) → enable → Save.</p>
+        <p><strong>D. Share endpoints with your team</strong><br />
+            Endpoints → multi-select → tick endpoints → Share panel → choose recipients → Share. They get a
+            notification.</p>
+        <p><strong>E. Check an API against your standards</strong><br />
+            Governance → create standard → add rules → assign to a system → Validate → run → open the compliance report.
+        </p>
+        <p><strong>F. See what changed after a release</strong><br />
+            Endpoints → filter Change Status = Modified/New → open an endpoint → History → view the diff.</p>
+
+        <!-- 20 -->
+        <h2 id="s20"><span class="sec-num">20.</span>Roles &amp; Permissions Reference</h2>
+        <p><strong>Roles:</strong> <code>SuperAdmin</code> (full access) and <code>Developer</code> (scoped to their
+            team/systems). Menu items appear only if you have the matching permission.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Area</th>
+                    <th>View</th>
+                    <th>Manage / Act</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Teams</td>
+                    <td><code>teams.view</code></td>
+                    <td><code>teams.manage</code></td>
+                </tr>
+                <tr>
+                    <td>Systems</td>
+                    <td><code>systems.view</code></td>
+                    <td><code>systems.manage</code></td>
+                </tr>
+                <tr>
+                    <td>Environments</td>
+                    <td><code>environments.view</code></td>
+                    <td><code>environments.manage</code></td>
+                </tr>
+                <tr>
+                    <td>Endpoints</td>
+                    <td><code>endpoints.view</code></td>
+                    <td><code>endpoints.manage</code>, run: <code>endpoints.run</code></td>
+                </tr>
+                <tr>
+                    <td>Auth Profiles</td>
+                    <td><code>authprofiles.view</code></td>
+                    <td><code>authprofiles.manage</code></td>
+                </tr>
+                <tr>
+                    <td>Swagger Sync</td>
+                    <td><code>swaggersync.view</code></td>
+                    <td>run: <code>swaggersync.run</code>, schedule: <code>swaggersync.manageschedule</code></td>
+                </tr>
+                <tr>
+                    <td>Governance</td>
+                    <td><code>governance.view</code></td>
+                    <td><code>governance.manage</code>, run: <code>governance.run</code></td>
+                </tr>
+                <tr>
+                    <td>Users</td>
+                    <td>—</td>
+                    <td><code>users.manage</code></td>
+                </tr>
+                <tr>
+                    <td>Export</td>
+                    <td><code>export.view</code></td>
+                    <td>—</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>If a menu item is missing, you likely lack that permission — ask an administrator.</p>
+
+        <!-- 21 -->
+        <h2 id="s21"><span class="sec-num">21.</span>Troubleshooting &amp; FAQ</h2>
+        <p><strong>I don't see the Users / Swagger Sync / Governance menu.</strong><br />
+            Those require specific permissions (<code>users.manage</code>, <code>swaggersync.view</code>,
+            <code>governance.view</code>). Ask an admin to grant them.
+        </p>
+        <p><strong>A sync failed / an endpoint didn't import.</strong><br />
+            Check the environment's <strong>Swagger URL</strong> is correct and reachable. The Swagger Sync page and
+            Dashboard show the error message. "Broken Swagger URLs" on the Dashboard highlights these.</p>
+        <p><strong>My test request returns 401/403.</strong><br />
+            Your <strong>Auth Profile</strong> may be missing or its token expired. Open Auth Profiles,
+            <strong>Test</strong> the profile, and update credentials. For token-based APIs, use an <strong>Auto Login
+                Token</strong> profile so tokens refresh automatically.
+        </p>
+        <p><strong>I can't create a team/system/environment.</strong><br />
+            You need the corresponding <code>*.manage</code> permission.</p>
+        <p><strong>Where did an endpoint go?</strong><br />
+            If it was removed from the source API, a sync marks it <span class="tag-del">Deleted</span>. Filter Change
+            Status = Deleted to find it, and check its <strong>History</strong>.</p>
+        <p><strong>Someone shared endpoints — where are they?</strong><br />
+            Endpoints page → toggle <strong>Shared with me</strong> (they're badged <span class="tag-new">New</span>
+            until seen).</p>
+        <p><strong>Can I test a random URL without setting up a system?</strong><br />
+            Yes — use <strong>Embedded Test</strong>.</p>
+
+        <!-- 22 -->
+        <h2 id="s22"><span class="sec-num">22.</span>Glossary</h2>
+        <ul>
+            <li><strong>Endpoint</strong> — a single API operation (method + path), e.g. <code>POST /api/orders</code>.
+            </li>
+            <li><strong>Swagger / OpenAPI</strong> — a standard document that describes an API; the portal imports
+                endpoints from it.</li>
+            <li><strong>Swagger Source</strong> — one such document; an environment can have several (e.g. per version).
+            </li>
+            <li><strong>Sync</strong> — the process of importing/refreshing endpoints from Swagger.</li>
+            <li><strong>Auth Profile</strong> — saved, encrypted credentials used to call endpoints.</li>
+            <li><strong>Auto Login Token</strong> — an auth profile that logs in to fetch and refresh a token
+                automatically.</li>
+            <li><strong>Change Status</strong> — whether an endpoint is New, Modified, Deleted, or Unchanged since the
+                last sync.</li>
+            <li><strong>Governance / Standard / Rule</strong> — definitions of how APIs should behave, and checks that
+                measure compliance.</li>
+            <li><strong>Compliance Score</strong> — the percentage of checks an API passes.</li>
+            <li><strong>Team / System / Environment</strong> — the organizational hierarchy the portal is built around.
+            </li>
+        </ul>
+
+        <hr />
+        <p style="text-align:center; color:var(--muted); font-size:14px;">End of User Guide · TWK Endpoints Hub</p>
+    </main>
+
+    <a href="#top" class="back-top" id="backTop">↑</a>
+
+    <script>
+        // Active TOC highlighting on scroll
+        const links = Array.from(document.querySelectorAll('#toc a'));
+        const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+        const backTop = document.getElementById('backTop');
+
+        function onScroll() {
+            let current = sections.length - 1;
+            for (let i = 0; i < sections.length; i++) {
+                if (sections[i] && sections[i].getBoundingClientRect().top > 120) {
+                    current = i - 1;
+                    break;
+                }
+            }
+            links.forEach(l => l.classList.remove('active'));
+            if (current >= 0) links[current].classList.add('active');
+
+            backTop.classList.toggle('show', window.scrollY > 400);
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+
+        // Close mobile sidebar when a link is tapped
+        links.forEach(l => l.addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.remove('open');
+        }));
+    </script>
+</body>
+
+</html>

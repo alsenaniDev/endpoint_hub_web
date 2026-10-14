@@ -1,0 +1,5 @@
+    <div class="json-viewer">
+      <div *ngIf="tree" [innerHTML]="tree" class="json-tree"></div>
+      <pre *ngIf="!tree && content" class="json-raw">{{ content }}</pre>
+      <span *ngIf="!content" class="empty">— empty —</span>
+    </div>

@@ -1,0 +1,119 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  color: var(--wb-ink);
+  background: var(--wb-canvas);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+
+.access-denied-page {
+  min-height: 100vh;
+  background: var(--wb-canvas);
+}
+
+.access-denied-header {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--wb-border);
+  background: var(--wb-surface);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--wb-ink);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--wb-accent-soft);
+  color: var(--wb-accent);
+  font-size: 10px;
+}
+
+.header-context {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-readable-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.denial-content {
+  display: grid;
+  min-height: calc(100vh - 56px);
+  place-items: start center;
+  padding: clamp(24px, 8vh, 72px) 20px;
+}
+
+.denial-card {
+  width: min(100%, 560px);
+  padding: 28px;
+  border: 1px solid var(--wb-border);
+  border-radius: 8px;
+  background: var(--wb-surface);
+  box-shadow: var(--wb-shadow);
+}
+
+.denial-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--wb-accent-soft);
+  color: var(--wb-accent);
+}
+
+.eyebrow {
+  margin: 18px 0 7px;
+  color: var(--wb-readable-muted);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 22px;
+  color: var(--wb-ink);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.organization-link {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--wb-border);
+  border-radius: 4px;
+  color: var(--wb-accent);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.organization-link:hover {
+  background: var(--wb-accent-soft);
+}
+
+@media (max-width: 560px) {
+  .access-denied-header { padding: 0 12px; }
+  .denial-content { padding: 28px 12px; }
+  .denial-card { padding: 20px; }
+  h1 { font-size: 16px; }
+}

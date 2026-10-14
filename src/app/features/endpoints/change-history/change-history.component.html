@@ -1,0 +1,101 @@
+<div class="page" [class.workbench-history]="isWorkbench">
+  <div class="page-header">
+    <div>
+      <a [routerLink]="detailRoute" class="back-link">{{ 'endpoints.backToDetails' | t }}</a>
+      <h1 class="page-title">{{ 'history.title' | t }}</h1>
+    </div>
+    <div class="history-meta" *ngIf="history().length">
+      <span class="count-badge">{{ history().length }} change{{ history().length !== 1 ? 's' : '' }}</span>
+    </div>
+  </div>
+
+  <app-loading [loading]="loading()"></app-loading>
+  <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+
+  <div *ngIf="!loading() && !errorKey() && !structuralOnly()" class="timeline">
+    <div *ngFor="let ch of history(); let i = index" class="timeline-item">
+      <div class="timeline-line" *ngIf="i < history().length - 1"></div>
+      <div class="timeline-dot" [class]="'dot-' + ch.changeType.toLowerCase()"></div>
+
+      <div class="history-card">
+        <!-- Header -->
+        <div class="history-header">
+          <span class="change-badge" [class]="'change-' + ch.changeType.toLowerCase()">
+            <span class="badge-icon">{{ changeIcon(ch.changeType) }}</span>
+            {{ ch.changeType }}
+          </span>
+          <span class="history-date">{{ ch.createdAt | date:'MMM d, y · h:mm a' }}</span>
+        </div>
+
+        <p class="change-summary" *ngIf="ch.changeSummary">{{ ch.changeSummary }}</p>
+
+        <!-- ── PRIMARY: What changed (inline diff table) ── -->
+        <ng-container *ngIf="getDiffRows(ch) as rows">
+          <div class="diff-summary" *ngIf="rows.length">
+            <div class="diff-legend">
+              <span class="legend-item legend-added">{{ 'history.added' | t }}</span>
+              <span class="legend-item legend-removed">{{ 'history.removed' | t }}</span>
+              <span class="legend-item legend-changed">{{ 'history.changed' | t }}</span>
+            </div>
+            <div class="diff-table">
+              <div class="diff-row-header">
+                <span class="col-key">{{ 'history.field' | t }}</span>
+                <span class="col-val">{{ 'history.before' | t }}</span>
+                <span class="col-val">{{ 'history.after' | t }}</span>
+              </div>
+              <div *ngFor="let row of rows" class="diff-row" [class]="'diff-' + row.type">
+                <span class="col-key">
+                  <span class="row-type-dot" [class]="'dot-' + row.type"></span>
+                  {{ row.key }}
+                </span>
+                <span class="col-val col-prev">
+                  <span *ngIf="row.type !== 'added'" class="val-pill pill-prev">{{ row.prev }}</span>
+                  <span *ngIf="row.type === 'added'" class="val-empty">—</span>
+                </span>
+                <span class="col-val col-next">
+                  <span *ngIf="row.type !== 'removed'" class="val-pill pill-next">{{ row.next }}</span>
+                  <span *ngIf="row.type === 'removed'" class="val-empty">—</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ── SECONDARY: Raw JSON (collapsed by default) ── -->
+        <div class="raw-toggle-row" *ngIf="ch.previousSnapshot || ch.newSnapshot">
+          <button class="raw-toggle" (click)="toggleRaw(ch)">
+            {{ rawOpen(ch) ? ('history.hideRaw' | t) : ('history.showRaw' | t) }}
+          </button>
+        </div>
+
+        <div class="raw-section" *ngIf="rawOpen(ch) && (ch.previousSnapshot || ch.newSnapshot)">
+          <div class="diff-tabs">
+            <button class="diff-tab" [class.active]="activeTab(ch) === 'side'" (click)="setTab(ch, 'side')"
+              *ngIf="ch.previousSnapshot && ch.newSnapshot">{{ 'history.sideBySide' | t }}</button>
+            <button class="diff-tab" [class.active]="activeTab(ch) === 'prev'" (click)="setTab(ch, 'prev')"
+              *ngIf="ch.previousSnapshot">{{ 'history.previous' | t }}</button>
+            <button class="diff-tab" [class.active]="activeTab(ch) === 'new'" (click)="setTab(ch, 'new')"
+              *ngIf="ch.newSnapshot">{{ 'history.new' | t }}</button>
+          </div>
+          <div class="diff-view" [class]="'view-' + activeTab(ch)">
+            <div class="diff-pane" *ngIf="activeTab(ch) === 'side' || activeTab(ch) === 'prev'">
+              <div class="pane-label pane-label-prev">{{ 'history.previous' | t }}</div>
+              <app-json-viewer [content]="ch.previousSnapshot ?? null"
+                [highlights]="getHighlights(ch, 'prev')"></app-json-viewer>
+            </div>
+            <div class="diff-pane" *ngIf="activeTab(ch) === 'side' || activeTab(ch) === 'new'">
+              <div class="pane-label pane-label-new">{{ 'history.new' | t }}</div>
+              <app-json-viewer [content]="ch.newSnapshot ?? null"
+                [highlights]="getHighlights(ch, 'new')"></app-json-viewer>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!history().length" class="empty-state">
+      <div class="empty-icon">📜</div>
+      <div>{{ 'history.noHistory' | t }}</div>
+    </div>
+  </div>
+</div>

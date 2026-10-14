@@ -1,0 +1,17 @@
+.workbench-runner.embedded-runner.page {
+  padding: 0;
+  .workbench-endpoint-header { min-height: 0; padding: 0 0 14px; border: 0; background: transparent; }
+  .endpoint-heading { display: none; }
+  .endpoint-heading-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+  .environment-chip { margin-inline-end: auto; }
+  .workbench-runner-layout.runner-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  .request-panel, .response-panel { min-width: 0; }
+  .panel-title { font-size: 12px; }
+  .panel-heading { padding-bottom: 12px; }
+  .eyebrow { font-size: 9px; }
+  .form-section label { font-size: 10px; }
+  .code-area { min-height: 220px; }
+}
+@media (max-width: 1100px) {
+  .workbench-runner.embedded-runner.page .workbench-runner-layout.runner-layout { grid-template-columns: minmax(0, 1fr); }
+}

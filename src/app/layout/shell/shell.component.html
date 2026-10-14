@@ -1,0 +1,48 @@
+<ng-container *ngIf="accessRoute(); else applicationShell">
+  <ng-container *ngFor="let revision of [organization.revision()]; trackBy: trackRevision">
+    <router-outlet></router-outlet>
+  </ng-container>
+</ng-container>
+
+<ng-template #applicationShell>
+  <div class="shell">
+    <button class="hamburger" (click)="sidebarOpen.set(!sidebarOpen())" [class.hidden-when-open]="sidebarOpen()"
+      aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="mobile-fab-group" [class.hidden-when-open]="sidebarOpen()">
+      <button class="fab-btn lang-fab" (click)="langService.toggle()"
+        [title]="langService.lang() === 'en' ? ('header.switchToAr' | t) : ('header.switchToEn' | t)">
+        {{ langService.lang() === 'en' ? 'AR' : 'EN' }}
+      </button>
+      <button class="fab-btn theme-fab" (click)="themeService.toggle()"
+        [title]="themeService.theme() === 'light' ? ('header.switchToDark' | t) : ('header.switchToLight' | t)"
+        [innerHTML]="themeIcon()">
+      </button>
+    </div>
+
+    <div class="sidebar-overlay" *ngIf="sidebarOpen()" (click)="sidebarOpen.set(false)"></div>
+    <app-sidebar [mobileOpen]="sidebarOpen()" (closeSidebar)="sidebarOpen.set(false)"
+      (collapsedChange)="sidebarCollapsed.set($event)"></app-sidebar>
+    <main class="shell-content" [class.sidebar-collapsed]="sidebarCollapsed()">
+      <app-header></app-header>
+      <div class="mobile-organization-context"><app-organization-switcher></app-organization-switcher></div>
+      <div *ngIf="organization.apiIssue() as issue" class="organization-message" role="alert">
+        {{ issue.key | t }}
+        <button (click)="organization.dismissApiError()">{{ 'common.close' | t }}</button>
+      </div>
+      <p *ngIf="organization.storageUnavailable()" role="status">{{ 'org.storageUnavailable' | t }}</p>
+      <ng-container *ngFor="let revision of [organization.revision()]; trackBy: trackRevision">
+        <router-outlet *ngIf="identityRoute() || organization.ready()"></router-outlet>
+      </ng-container>
+      <section *ngIf="!identityRoute() && !organization.ready()" style="padding:1.5rem">
+        <p role="status" *ngIf="organization.loading()">{{ 'common.loading' | t }}</p>
+        <p role="alert" *ngIf="organization.error()">{{ organization.error()! | t }}</p>
+        <a routerLink="/organizations">{{ 'org.settings' | t }}</a>
+      </section>
+    </main>
+  </div>
+</ng-template>

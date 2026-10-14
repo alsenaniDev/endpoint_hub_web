@@ -1,0 +1,314 @@
+<div class="page" [class.governance-workspace]="workbench" [class.gov-embedded]="embedded">
+<div class="back-nav" *ngIf="!embedded">
+  <a [routerLink]="baseRoute" class="back-link">← Back to Standards</a>
+</div>
+
+<app-loading *ngIf="loading()"></app-loading>
+<p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+<p *ngIf="structuralOnly() && !embedded" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+<ng-container *ngIf="!loading() && !errorKey() && standard()">
+  <ng-container *ngIf="!workbench; else policyWorkspace">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ structuralOnly() ? standard()!.id : standard()!.name }}</h1>
+      <p class="page-subtitle" *ngIf="!structuralOnly()">{{ standard()!.description || 'No description' }}</p>
+    </div>
+    <a *appPermission="'governance.run'" [routerLink]="['/governance/validate']" [queryParams]="{ standardId: standardId }" class="btn-primary">▶ Run Validation</a>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><span class="stat-value">{{ standard()!.ruleCount }}</span><span class="stat-label">Rules</span></div>
+    <div class="stat-card"><span class="stat-value">{{ standard()!.assignmentCount }}</span><span class="stat-label">Assignments</span></div>
+    <div class="stat-card">
+      <span class="stat-value">
+        <span class="badge" [class.badge-active]="standard()!.isActive" [class.badge-inactive]="!standard()!.isActive">
+          {{ standard()!.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </span>
+      <span class="stat-label">Status</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'rules'" (click)="activeTab = 'rules'">Rules ({{ rules().length }})</button>
+    <button class="tab" [class.active]="activeTab === 'assignments'" (click)="activeTab = 'assignments'">Assignments ({{ assignments().length }})</button>
+    <button class="tab" [class.active]="activeTab === 'runs'" (click)="activeTab = 'runs'">Validation Runs ({{ runs().length }})</button>
+  </div>
+
+  <!-- Rules Tab -->
+  <div *ngIf="activeTab === 'rules'">
+    <div class="tab-toolbar">
+      <button *appPermission="'governance.manage'" [disabled]="!canManage()" class="btn-primary" (click)="openRuleForm()">+ Add Rule</button>
+    </div>
+    <div class="empty-state" *ngIf="rules().length === 0">No rules defined. Add validation rules to this standard.</div>
+    <table class="data-table" *ngIf="rules().length > 0">
+      <thead>
+        <tr>
+          <th>Rule Name</th>
+          <th>Type</th>
+          <th>Target</th>
+          <th>Severity</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let rule of rules()">
+          <td>
+            <div class="rule-name">{{ structuralOnly() ? rule.id : rule.ruleName }}</div>
+            <div class="rule-desc" *ngIf="!structuralOnly() && rule.ruleDescription">{{ rule.ruleDescription }}</div>
+          </td>
+          <td><span class="badge badge-type">{{ rule.ruleType }}</span></td>
+          <td>{{ rule.target }}</td>
+          <td><span class="badge" [ngClass]="severityClass(rule.severity)">{{ rule.severity }}</span></td>
+          <td><span class="badge" [class.badge-active]="rule.isActive" [class.badge-inactive]="!rule.isActive">{{ rule.isActive ? 'Active' : 'Off' }}</span></td>
+          <td>
+            <div class="row-actions">
+              <button *appPermission="'governance.manage'" [disabled]="!canManage()" class="btn-ghost btn-sm" (click)="openRuleForm(rule)">Edit</button>
+              <button *appPermission="'governance.manage'" [disabled]="!canManage()" class="btn-danger btn-sm" (click)="deleteRule(rule.id)">Delete</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Assignments Tab -->
+  <div *ngIf="activeTab === 'assignments'">
+    <div class="tab-toolbar">
+      <button *appPermission="'governance.manage'" [disabled]="!canManage()" class="btn-primary" (click)="openAssignmentForm()">+ Assign Scope</button>
+    </div>
+    <div class="empty-state" *ngIf="assignments().length === 0">No assignments. Assign this standard to Teams, Systems or Environments.</div>
+    <table class="data-table" *ngIf="assignments().length > 0">
+      <thead>
+        <tr><th>Scope Type</th><th>Scope Name</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of assignments()">
+          <td><span class="badge badge-type">{{ a.scope }}</span></td>
+          <td>{{ structuralOnly() ? a.scopeId : a.scopeName }}</td>
+          <td><button *appPermission="'governance.manage'" [disabled]="!canManage()" class="btn-danger btn-sm" (click)="removeAssignment(a.id)">Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Runs Tab -->
+  <div *ngIf="activeTab === 'runs'">
+    <div class="tab-toolbar">
+      <a *appPermission="'governance.run'" [routerLink]="['/governance/validate']" [queryParams]="{ standardId: standardId }" class="btn-primary">▶ New Run</a>
+    </div>
+    <div class="empty-state" *ngIf="runs().length === 0">No validation runs yet.</div>
+    <table class="data-table" *ngIf="runs().length > 0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Endpoints</th>
+          <th>Score</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let run of runs()">
+          <td>{{ run.createdAt | date:'MMM d, y HH:mm' }}</td>
+          <td><span class="badge" [ngClass]="statusClass(run.status)">{{ run.status }}</span></td>
+          <td>{{ run.passedEndpoints }}/{{ run.totalEndpoints }}</td>
+          <td>
+            <div class="score-wrap">
+              <div class="score-bar">
+                <div class="score-fill" [style.width.%]="run.overallComplianceScore" [class.score-low]="run.overallComplianceScore < 50" [class.score-mid]="run.overallComplianceScore >= 50 && run.overallComplianceScore < 80" [class.score-high]="run.overallComplianceScore >= 80"></div>
+              </div>
+              <span class="score-pct">{{ run.overallComplianceScore | number:'1.0-1' }}%</span>
+            </div>
+          </td>
+          <td>
+            <div class="row-actions">
+              <a [routerLink]="['/governance/runs', run.id, 'report']" class="btn-secondary btn-sm">View Report</a>
+              <button *ngIf="canDeleteRun()" class="btn-danger btn-sm" (click)="deleteRun(run.id)">Delete</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </ng-container>
+
+  <ng-template #policyWorkspace>
+    <header class="gov-context">
+      <div class="gov-breadcrumb">{{ 'gov.standards' | t }} / {{ structuralOnly() ? standard()!.id : standard()!.name }}</div>
+      <div class="gov-context-title">
+        <span class="gov-resource-icon pi pi-shield" aria-hidden="true"></span>
+        <h2>{{ structuralOnly() ? standard()!.id : standard()!.name }}</h2>
+        <span class="gov-badge" [class.muted]="!standard()!.isActive">{{ (standard()!.isActive ? 'gov.active' : 'gov.inactive') | t }}</span>
+        <a *ngIf="canRun()" class="btn-primary" [routerLink]="[baseRoute, 'validate']" [queryParams]="{standardId: standardId}">{{ 'gov.evaluate' | t }}</a>
+      </div>
+      <p class="gov-description" *ngIf="!structuralOnly()">{{ standard()!.description || ('gov.noDescription' | t) }}</p>
+      <div class="gov-inline-context"><span>{{ rules().length }} {{ 'gov.rules' | t }}</span><span>{{ assignments().length }} {{ 'gov.assignments' | t }}</span><span>{{ 'gov.created' | t }} {{ standard()!.createdAt | date:'mediumDate' }}</span></div>
+      <nav class="gov-tabs" [attr.aria-label]="'gov.policyWorkspace' | t">
+        <button [class.active]="activeTab === 'rules'" [attr.aria-pressed]="activeTab === 'rules'" (click)="activeTab = 'rules'">{{ 'gov.policies' | t }}</button>
+        <button [class.active]="activeTab === 'assignments'" [attr.aria-pressed]="activeTab === 'assignments'" (click)="activeTab = 'assignments'">{{ 'gov.scope' | t }}</button>
+        <button [class.active]="activeTab === 'runs'" [attr.aria-pressed]="activeTab === 'runs'" (click)="activeTab = 'runs'">{{ 'gov.evaluations' | t }}</button>
+      </nav>
+    </header>
+    <section class="gov-panel" *ngIf="activeTab === 'rules'">
+      <div class="gov-section-heading"><div><h3>{{ 'gov.policies' | t }}</h3><p>{{ 'gov.policiesHint' | t }}</p></div>
+        <button *ngIf="canManage()" class="btn-primary" (click)="openRuleForm()">{{ 'gov.addRule' | t }}</button>
+      </div>
+      <div class="gov-table-tools">
+        <label class="gov-search" *ngIf="!structuralOnly()"><span class="pi pi-search" aria-hidden="true"></span><input type="search" [(ngModel)]="policySearch" [placeholder]="'gov.searchPolicies' | t" [attr.aria-label]="'gov.searchPolicies' | t"></label>
+        <select [(ngModel)]="policyStatus" [attr.aria-label]="'gov.status' | t"><option value="">{{ 'gov.allStatuses' | t }}</option><option value="active">{{ 'gov.active' | t }}</option><option value="inactive">{{ 'gov.inactive' | t }}</option></select>
+      </div>
+      <div class="gov-table-scroll">
+        <table class="gov-policy-table" *ngIf="filteredRules.length; else noRules">
+          <thead><tr><th>{{ 'gov.policy' | t }}</th><th>{{ 'gov.target' | t }}</th><th>{{ 'gov.severity' | t }}</th><th>{{ 'gov.status' | t }}</th><th>{{ 'gov.created' | t }}</th></tr></thead>
+          <tbody><tr *ngFor="let rule of filteredRules" [class.selected]="selectedRuleId() === rule.id">
+            <td><button class="gov-policy-select" (click)="selectedRuleId.set(rule.id)" [attr.aria-pressed]="selectedRuleId() === rule.id"><strong>{{ structuralOnly() ? rule.id : rule.ruleName }}</strong><small>{{ rule.ruleType }}</small></button></td>
+            <td>{{ rule.target }}</td><td><span class="badge" [ngClass]="severityClass(rule.severity)">{{ rule.severity }}</span></td>
+            <td><span class="gov-badge" [class.muted]="!rule.isActive">{{ (rule.isActive ? 'gov.active' : 'gov.inactive') | t }}</span></td><td>{{ rule.createdAt | date:'mediumDate' }}</td>
+          </tr></tbody>
+        </table>
+      </div>
+      <ng-template #noRules><div class="gov-state">{{ (rules().length ? 'gov.noMatches' : 'gov.noRules') | t }}</div></ng-template>
+    </section>
+    <div class="gov-detail-layout" *ngIf="activeTab === 'rules'">
+      <section class="gov-panel gov-policy-detail" *ngIf="selectedRule() as rule; else policyPlaceholder">
+        <div class="gov-section-heading"><div><h3>{{ 'gov.selectedPolicy' | t }}</h3><p>{{ structuralOnly() ? rule.id : rule.ruleName }}</p></div>
+          <div class="gov-actions" *ngIf="canManage()"><button class="btn-secondary" (click)="openRuleForm(rule)">{{ 'gov.editRule' | t }}</button><button class="btn-ghost" (click)="deleteRule(rule.id)">{{ 'gov.delete' | t }}</button></div>
+        </div>
+        <dl class="gov-definition-grid"><div><dt>{{ 'gov.type' | t }}</dt><dd>{{ rule.ruleType }}</dd></div><div><dt>{{ 'gov.target' | t }}</dt><dd>{{ rule.target }}</dd></div><div><dt>{{ 'gov.severity' | t }}</dt><dd>{{ rule.severity }}</dd></div><div><dt>{{ 'gov.policyId' | t }}</dt><dd><code>{{ rule.id }}</code></dd></div></dl>
+        <ng-container *ngIf="!structuralOnly()">
+          <p class="gov-description">{{ rule.ruleDescription || ('gov.noDescription' | t) }}</p>
+          <h4>{{ 'gov.configuration' | t }}</h4><pre class="gov-code">{{ rule.expression || ('gov.noExpression' | t) }}</pre>
+          <dl class="gov-definition-grid"><div><dt>{{ 'gov.failureMessage' | t }}</dt><dd>{{ rule.errorMessage }}</dd></div><div><dt>{{ 'gov.suggestedFix' | t }}</dt><dd>{{ rule.suggestedFix || ('gov.notProvided' | t) }}</dd></div></dl>
+        </ng-container>
+      </section>
+      <ng-template #policyPlaceholder>
+        <section class="gov-panel gov-policy-detail"><h3>{{ 'gov.selectedPolicy' | t }}</h3><div class="gov-state">{{ 'gov.selectPolicy' | t }}</div></section>
+      </ng-template>
+      <aside class="gov-panel gov-evidence">
+        <div class="gov-section-heading"><h3>{{ 'gov.evidence' | t }}</h3></div>
+        <p>{{ 'gov.evidenceHint' | t }}</p>
+        <div class="gov-evidence-entry" *ngFor="let run of runs().slice(0, 3)">
+          <span class="gov-badge" [ngClass]="statusClass(run.status)">{{ run.status }}</span>
+          <span>{{ run.createdAt | date:'short' }}</span>
+          <a [routerLink]="[baseRoute, 'runs', run.id, 'report']">{{ 'gov.viewFindings' | t }}</a>
+        </div>
+        <p *ngIf="!runs().length">{{ 'gov.noRuns' | t }}</p>
+        <button class="btn-secondary" (click)="activeTab = 'runs'">{{ 'gov.allEvaluations' | t }}</button>
+        <p class="gov-action-note" *ngIf="!canRun()">{{ 'gov.evaluationUnavailable' | t }}</p>
+        <p class="gov-action-note" *ngIf="!canManage()">{{ 'gov.configurationUnavailable' | t }}</p>
+      </aside>
+    </div>
+    <section class="gov-panel" *ngIf="activeTab === 'assignments'">
+      <div class="gov-section-heading"><div><h3>{{ 'gov.scope' | t }}</h3><p>{{ 'gov.scopeHint' | t }}</p></div><button *ngIf="canManage()" class="btn-primary" (click)="openAssignmentForm()">{{ 'gov.assignScope' | t }}</button></div>
+      <div class="gov-state" *ngIf="!assignments().length">{{ 'gov.noAssignments' | t }}</div>
+      <div class="gov-table-scroll" *ngIf="assignments().length"><table class="gov-policy-table"><thead><tr><th>{{ 'gov.type' | t }}</th><th>{{ 'gov.resource' | t }}</th><th>{{ 'gov.actions' | t }}</th></tr></thead><tbody><tr *ngFor="let a of assignments()"><td>{{ a.scope }}</td><td>{{ structuralOnly() ? a.scopeId : a.scopeName }}<small>{{ a.scopeId }}</small></td><td><button *ngIf="canManage()" class="btn-ghost" (click)="removeAssignment(a.id)">{{ 'gov.remove' | t }}</button></td></tr></tbody></table></div>
+      <p class="gov-action-note" *ngIf="!canManage()">{{ 'gov.configurationUnavailable' | t }}</p>
+    </section>
+    <section class="gov-panel" *ngIf="activeTab === 'runs'">
+      <div class="gov-section-heading"><div><h3>{{ 'gov.evaluations' | t }}</h3><p>{{ 'gov.recordedResults' | t }}</p></div><a *ngIf="canRun()" class="btn-primary" [routerLink]="[baseRoute, 'validate']" [queryParams]="{standardId: standardId}">{{ 'gov.evaluate' | t }}</a></div>
+      <div class="gov-state" *ngIf="!runs().length">{{ 'gov.noRuns' | t }}</div>
+      <div class="gov-table-scroll" *ngIf="runs().length"><table class="gov-policy-table"><thead><tr><th>{{ 'gov.created' | t }}</th><th>{{ 'gov.status' | t }}</th><th>{{ 'gov.endpoints' | t }}</th><th>{{ 'gov.score' | t }}</th><th>{{ 'gov.actions' | t }}</th></tr></thead><tbody><tr *ngFor="let run of runs()"><td>{{ run.createdAt | date:'short' }}</td><td><span class="badge" [ngClass]="statusClass(run.status)">{{ run.status }}</span></td><td>{{ run.passedEndpoints }} / {{ run.totalEndpoints }}</td><td>{{ run.overallComplianceScore | number:'1.0-1' }}%</td><td><div class="gov-actions"><a class="btn-secondary" [routerLink]="[baseRoute, 'runs', run.id, 'report']">{{ 'gov.viewFindings' | t }}</a><button *ngIf="canDeleteRun()" class="btn-ghost" (click)="deleteRun(run.id)">{{ 'gov.delete' | t }}</button></div></td></tr></tbody></table></div>
+      <div class="gov-pagination" *ngIf="runsTotal > 20"><button class="btn-secondary" [disabled]="runsPage === 1" (click)="changeRunsPage(-1)">{{ 'gov.previous' | t }}</button><span>{{ runsPage }} · {{ runsTotal }} {{ 'gov.results' | t }}</span><button class="btn-secondary" [disabled]="runsPage * 20 >= runsTotal" (click)="changeRunsPage(1)">{{ 'gov.next' | t }}</button></div>
+      <p class="gov-action-note" *ngIf="!canRun()">{{ 'gov.evaluationUnavailable' | t }}</p>
+    </section>
+  </ng-template>
+</ng-container>
+
+<!-- Rule Form Modal -->
+<div class="modal-overlay" [class.gov-drawer-overlay]="workbench" *ngIf="canManage() && showRuleForm" (click)="closeRuleForm()" (keydown.escape)="closeRuleForm()">
+  <div class="modal modal-wide" [class.gov-drawer]="workbench" role="dialog" aria-modal="true" aria-label="Policy configuration" (click)="$event.stopPropagation()">
+    <h2 class="modal-title">{{ editingRuleId ? 'Edit Rule' : 'New Rule' }}</h2>
+    <form [formGroup]="ruleForm" (ngSubmit)="submitRule()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rule Name <span class="required">*</span></label>
+          <input formControlName="ruleName" placeholder="e.g. Endpoint Path Convention">
+        </div>
+        <div class="form-group">
+          <label>Severity <span class="required">*</span></label>
+          <select formControlName="severity">
+            <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input formControlName="ruleDescription" placeholder="Brief description of what this rule validates">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rule Type <span class="required">*</span></label>
+          <select formControlName="ruleType">
+            <option *ngFor="let t of ruleTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Target <span class="required">*</span></label>
+          <select formControlName="target">
+            <option *ngFor="let t of ruleTargets" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Expression</label>
+        <textarea formControlName="expression" rows="3" placeholder="Regex pattern, JSON config, or leave empty for RequiredField rules"></textarea>
+        <small class="form-hint">
+          Regex: pattern string &nbsp;|&nbsp;
+          ResponseSchema: &#123;"requiredFields":["success","traceId"]&#125; &nbsp;|&nbsp;
+          HttpMethod/StatusCode: &#123;"method":"POST","requiredStatusCodes":[201]&#125;
+        </small>
+      </div>
+      <div class="form-group">
+        <label>Error Message <span class="required">*</span></label>
+        <input formControlName="errorMessage" placeholder="Message shown when this rule fails">
+      </div>
+      <div class="form-group">
+        <label>Suggested Fix</label>
+        <input formControlName="suggestedFix" placeholder="What should the developer do to fix this?">
+      </div>
+      <div class="form-group form-check">
+        <input type="checkbox" formControlName="isActive" id="ruleActive">
+        <label for="ruleActive">Active</label>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="closeRuleForm()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="ruleForm.invalid || saving()">
+          {{ saving() ? 'Saving...' : (editingRuleId ? 'Update' : 'Create') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Assignment Form Modal -->
+<div class="modal-overlay" [class.gov-drawer-overlay]="workbench" *ngIf="canManage() && showAssignmentForm" (click)="closeAssignmentForm()" (keydown.escape)="closeAssignmentForm()">
+  <div class="modal" [class.gov-drawer]="workbench" role="dialog" aria-modal="true" aria-label="Policy scope" (click)="$event.stopPropagation()">
+    <h2 class="modal-title">Assign Standard to Scope</h2>
+    <form [formGroup]="assignmentForm" (ngSubmit)="submitAssignment()">
+      <div class="form-group">
+        <label>Scope Type <span class="required">*</span></label>
+        <select formControlName="scope" (change)="onScopeChange($event)">
+          <option *ngFor="let s of scopes" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>{{ assignmentForm.value.scope }} <span class="required">*</span></label>
+        <select formControlName="scopeId">
+          <option value="">Select...</option>
+          <option *ngFor="let opt of scopeOptions" [value]="opt.id">{{ opt.name }}</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="closeAssignmentForm()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="assignmentForm.invalid || saving()">
+          {{ saving() ? 'Saving...' : 'Assign' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+</div>

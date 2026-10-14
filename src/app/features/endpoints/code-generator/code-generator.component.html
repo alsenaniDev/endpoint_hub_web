@@ -1,0 +1,23 @@
+<div class="page" [class.workbench-code-generator]="isWorkbench">
+  <div class="back-link"><a [routerLink]="detailRoute">{{ 'endpoints.backToDetails' | t }}</a></div>
+  <h1 class="page-title">{{ 'codeGen.title' | t }}</h1>
+  <app-loading [loading]="loading()"></app-loading>
+  <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+  <ng-container *ngIf="!loading() && !errorKey() && !structuralOnly() && code()">
+    <div *ngFor="let block of codeBlocks()" class="code-section">
+      <div class="code-header">
+        <span class="code-lang">{{ block.language }}</span>
+        <span class="code-label">{{ block.label }}</span>
+        <button class="btn-copy" (click)="copy(block.code)" *ngIf="block.code">{{ 'codeGen.copy' | t }}</button>
+      </div>
+      <div *ngIf="block.code; else emptyBlock" class="code-block-wrapper">
+        <pre class="code-block">{{ block.code }}</pre>
+      </div>
+      <ng-template #emptyBlock>
+        <div class="empty-block">
+          <span>{{ 'codeGen.noSchema' | t }}</span>
+        </div>
+      </ng-template>
+    </div>
+  </ng-container>
+</div>

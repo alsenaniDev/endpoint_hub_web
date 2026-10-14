@@ -1,0 +1,142 @@
+    .shell {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    .shell-content {
+      width: calc(100% - 240px);
+      min-width: 0;
+      overflow-y: auto;
+      height: 100vh;
+      background: var(--bg-base);
+      transition: width 0.22s ease, background 0.2s;
+    }
+
+    .shell-content.sidebar-collapsed {
+      width: calc(100% - 64px);
+    }
+
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 14px;
+      inset-inline-start: 14px;
+      z-index: 300;
+      flex-direction: column;
+      gap: 5px;
+      padding: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .hamburger span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    .hamburger.open span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .hamburger.open span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger.open span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 150;
+    }
+
+    /* ── Floating action buttons (mobile only) ── */
+    .mobile-fab-group {
+      display: none;
+      position: fixed;
+      top: 10px;
+      inset-inline-end: 12px;
+      z-index: 300;
+      flex-direction: row;
+      gap: 8px;
+    }
+
+    .fab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.15s, border-color 0.15s;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      font-family: inherit;
+      padding: 0 10px;
+
+      svg {
+        display: block;
+        pointer-events: none;
+      }
+
+      &:hover {
+        background: var(--bg-hover);
+        border-color: var(--text-secondary);
+      }
+    }
+
+    .theme-fab {
+      padding: 0;
+      width: 36px;
+    }
+
+    .mobile-organization-context {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-organization-context {
+        display: block;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .hamburger {
+        display: flex;
+      }
+
+      .hamburger.hidden-when-open {
+        display: none;
+      }
+
+      .mobile-fab-group {
+        display: flex;
+      }
+
+      .mobile-fab-group.hidden-when-open {
+        display: none;
+      }
+
+      .shell-content,
+      .shell-content.sidebar-collapsed {
+        width: 100%;
+        padding-top: 56px;
+      }
+    }

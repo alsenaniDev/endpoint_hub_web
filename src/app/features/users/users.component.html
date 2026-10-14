@@ -1,0 +1,205 @@
+<div class="page">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ 'users.title' | t }}</h1>
+            <p class="page-subtitle">{{ 'users.subtitle' | t }}</p>
+        </div>
+        <button class="btn-primary" (click)="openForm()">{{ 'users.newBtn' | t }}</button>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <h2 class="modal-title">{{ 'users.modal.new' | t }}</h2>
+            <form [formGroup]="form" (ngSubmit)="submit()">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ 'users.form.username' | t }}</label>
+                        <input type="text" formControlName="username" placeholder="john_doe">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'users.form.fullName' | t }}</label>
+                        <input type="text" formControlName="fullName" placeholder="John Doe">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ 'users.form.email' | t }}</label>
+                        <input type="email" formControlName="email" placeholder="john@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ 'users.form.password' | t }}</label>
+                        <input type="password" formControlName="password" placeholder="Min 6 characters">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>{{ 'users.form.role' | t }}</label>
+                        <p-dropdown
+                          formControlName="roleId"
+                          [options]="roles()"
+                          optionLabel="name"
+                          optionValue="id"
+                          (onChange)="onCreateRoleChange($event.value)"
+                          placeholder="Select role…">
+                        </p-dropdown>
+                    </div>
+                    <div class="form-group" *ngIf="canManageUsers() && createRoleIsDeveloper()">
+                        <label>{{ 'users.form.team' | t }}</label>
+                        <p-dropdown
+                          formControlName="teamId"
+                          [options]="teams()"
+                          optionLabel="name"
+                          optionValue="id"
+                          [showClear]="true"
+                          placeholder="No team">
+                        </p-dropdown>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+                    <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+                        {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal (role + team) -->
+    <div class="modal-overlay" *ngIf="editingUser()" (click)="closeEdit()">
+        <div class="modal modal-sm" (click)="$event.stopPropagation()">
+            <h2 class="modal-title">{{ 'users.modal.edit' | t }}</h2>
+
+            <!-- User info summary -->
+            <div class="edit-user-info">
+                <div class="user-avatar-lg">{{ editingUser()!.username[0].toUpperCase() }}</div>
+                <div>
+                    <div class="edit-user-name">{{ editingUser()!.username }}</div>
+                    <div class="edit-user-email">{{ editingUser()!.email }}</div>
+                </div>
+            </div>
+
+            <form [formGroup]="editForm" (ngSubmit)="submitEdit()">
+                <div class="form-group">
+                    <label>{{ 'users.form.role' | t }}</label>
+                    <p-dropdown
+                      formControlName="roleId"
+                      [options]="roles()"
+                      optionLabel="name"
+                      optionValue="id"
+                      (onChange)="onEditRoleChange($event.value)">
+                    </p-dropdown>
+                </div>
+
+                <div class="form-group" *ngIf="editRoleIsDeveloper()">
+                    <label>{{ 'users.form.team' | t }}</label>
+                    <p-dropdown
+                      formControlName="teamId"
+                      [options]="teams()"
+                      optionLabel="name"
+                      optionValue="id"
+                      [showClear]="true"
+                      placeholder="— No team —">
+                    </p-dropdown>
+                </div>
+
+                <div *ngIf="!editRoleIsDeveloper() && editForm.value.roleId" class="info-note">
+                    {{ 'users.edit.superAdminNoTeam' | t }}
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" (click)="closeEdit()">{{ 'common.cancel' | t }}</button>
+                    <button type="submit" class="btn-primary" [disabled]="editForm.invalid || saving()">
+                        {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <app-loading [loading]="loading()"></app-loading>
+
+    <div *ngIf="!loading()">
+        <!-- Filter bar -->
+        <div class="filter-bar">
+            <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.6"/><path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <input class="search-input" type="text" placeholder="Search by username, email or name…"
+                    [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)">
+            </div>
+            <p-dropdown
+                [options]="roles()"
+                optionLabel="name"
+                optionValue="id"
+                [showClear]="true"
+                placeholder="All roles"
+                [ngModel]="filterRoleId()"
+                (ngModelChange)="filterRoleId.set($event ?? '')">
+            </p-dropdown>
+            <p-dropdown *ngIf="canManageUsers()"
+                [options]="teams()"
+                optionLabel="name"
+                optionValue="id"
+                [showClear]="true"
+                placeholder="All teams"
+                [ngModel]="filterTeamId()"
+                (ngModelChange)="filterTeamId.set($event ?? '')">
+            </p-dropdown>
+            <span class="filter-count" *ngIf="filteredUsers().length !== users().length">
+                {{ filteredUsers().length }} of {{ users().length }}
+            </span>
+        </div>
+
+        <div class="users-table-wrapper">
+            <table class="users-table" *ngIf="filteredUsers().length; else emptyState">
+                <thead>
+                    <tr>
+                        <th>{{ 'users.col.username' | t }}</th>
+                        <th>{{ 'users.col.email' | t }}</th>
+                        <th>{{ 'users.col.fullName' | t }}</th>
+                        <th>{{ 'users.col.role' | t }}</th>
+                        <th *ngIf="canManageUsers()">{{ 'users.col.team' | t }}</th>
+                        <th>{{ 'users.col.lastLogin' | t }}</th>
+                        <th>{{ 'users.col.actions' | t }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let user of filteredUsers()">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">{{ user.username[0].toUpperCase() }}</div>
+                                <span>{{ user.username }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.fullName || '—' }}</td>
+                        <td>
+                            <span class="role-badge" [class.role-admin]="user.role === 'SuperAdmin'">{{ user.role }}</span>
+                        </td>
+                        <td *ngIf="canManageUsers()">{{ user.teamName || '—' }}</td>
+                        <td>{{ formatDate(user.lastLoginAt) }}</td>
+                        <td class="actions-cell">
+                            <div>
+                                <button *ngIf="canManageUsers()" class="btn-sm btn-secondary" (click)="openEdit(user)">
+                                    {{ 'common.edit' | t }}
+                                </button>
+                                <button *ngIf="canManageUsers() && user.role !== 'SuperAdmin'" class="btn-sm btn-danger" (click)="delete(user.id)">
+                                    {{ 'common.delete' | t }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <ng-template #emptyState>
+                <div class="empty-state">{{ users().length ? 'No users match the current filters.' : ('users.noUsers' | t) }}</div>
+            </ng-template>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,124 @@
+<main class="access-page">
+  <aside class="access-brand" aria-label="Endpoints Hub">
+    <div class="brand-mark" aria-label="Endpoints Hub">
+      <span class="brand-icon" aria-hidden="true">&lt;&gt;</span>
+      <span>{{ 'login.title' | t }}</span>
+    </div>
+    <div class="brand-message">
+      <span class="brand-eyebrow">{{ 'access.eyebrow' | t }}</span>
+      <h2>{{ 'access.brandTitle' | t }}</h2>
+      <p>{{ 'access.brandDescription' | t }}</p>
+      <ul>
+        <li><span class="pi pi-check-circle" aria-hidden="true"></span>{{ 'access.benefitOne' | t }}</li>
+        <li><span class="pi pi-check-circle" aria-hidden="true"></span>{{ 'access.benefitTwo' | t }}</li>
+        <li><span class="pi pi-check-circle" aria-hidden="true"></span>{{ 'access.benefitThree' | t }}</li>
+      </ul>
+    </div>
+    <p class="brand-footer">{{ 'access.brandFooter' | t }}</p>
+  </aside>
+
+  <section class="access-content">
+    <div class="access-form" [class.registration]="mode === 'register'">
+      <ng-container *ngIf="mode === 'login'; else registration">
+        <header class="form-heading">
+          <h1>{{ 'access.signInTitle' | t }}</h1>
+          <p>{{ 'access.signInSubtitle' | t }}</p>
+        </header>
+        <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
+          <div class="form-field">
+            <label for="signin-email">{{ 'access.workEmail' | t }}</label>
+            <input id="signin-email" type="text" inputmode="email" autocomplete="username"
+              formControlName="usernameOrEmail" [placeholder]="'access.emailPlaceholder' | t"
+              [attr.aria-invalid]="loginForm.controls.usernameOrEmail.invalid && loginForm.controls.usernameOrEmail.touched">
+            <small class="field-error" *ngIf="loginForm.controls.usernameOrEmail.invalid && loginForm.controls.usernameOrEmail.touched">
+              {{ 'access.emailRequired' | t }}
+            </small>
+          </div>
+          <div class="form-field">
+            <label for="signin-password">{{ 'login.password' | t }}</label>
+            <input id="signin-password" type="password" autocomplete="current-password"
+              formControlName="password" [placeholder]="'access.passwordPlaceholder' | t"
+              [attr.aria-invalid]="loginForm.controls.password.invalid && loginForm.controls.password.touched">
+            <small class="field-error" *ngIf="loginForm.controls.password.invalid && loginForm.controls.password.touched">
+              {{ 'access.passwordRequired' | t }}
+            </small>
+          </div>
+          <div class="form-error" *ngIf="error()" role="alert">{{ error() }}</div>
+          <button type="submit" class="primary-action" [disabled]="loading()">
+            <span *ngIf="loading()" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+            {{ loading() ? ('login.loggingIn' | t) : ('access.signInAction' | t) }}
+          </button>
+          <p class="form-switch">{{ 'access.noAccount' | t }}
+            <button type="button" (click)="switchToRegister()">{{ 'access.createAccountLink' | t }}</button>
+          </p>
+        </form>
+      </ng-container>
+
+      <ng-template #registration>
+        <header class="form-heading">
+          <h1>{{ 'access.registerTitle' | t }}</h1>
+          <p>{{ 'access.registerSubtitle' | t }}</p>
+          <small>{{ 'access.registerOrganizationNote' | t }}</small>
+        </header>
+        <form [formGroup]="registerForm" (ngSubmit)="register()" novalidate>
+          <div class="form-error" *ngIf="registrationValidationShown() && registerForm.invalid" role="alert">
+            {{ 'access.reviewFields' | t }}
+          </div>
+          <div class="form-error" *ngIf="error()" role="alert">{{ error() }}</div>
+          <div class="form-field">
+            <label for="register-name">{{ 'login.fullName' | t }}</label>
+            <input id="register-name" type="text" autocomplete="name" formControlName="fullName"
+              [placeholder]="'access.namePlaceholder' | t">
+          </div>
+          <div class="form-field">
+            <label for="register-username">{{ 'login.username' | t }}</label>
+            <input id="register-username" type="text" autocomplete="username" formControlName="username"
+              [placeholder]="'access.usernamePlaceholder' | t"
+              [attr.aria-invalid]="registerForm.controls.username.invalid && registerForm.controls.username.touched">
+            <small class="field-error" *ngIf="registerForm.controls.username.invalid && registerForm.controls.username.touched">
+              {{ 'access.usernameRequired' | t }}
+            </small>
+          </div>
+          <div class="form-field">
+            <label for="register-email">{{ 'access.registerEmail' | t }}</label>
+            <input id="register-email" type="email" autocomplete="email" formControlName="email"
+              [placeholder]="'access.emailPlaceholder' | t"
+              [attr.aria-invalid]="registerForm.controls.email.invalid && registerForm.controls.email.touched">
+            <small class="field-error" *ngIf="registerForm.controls.email.invalid && registerForm.controls.email.touched">
+              {{ registerForm.controls.email.hasError('email') ? ('access.emailInvalid' | t) : ('access.emailRequired' | t) }}
+            </small>
+          </div>
+          <div class="form-field">
+            <label for="register-password">{{ 'login.password' | t }}</label>
+            <input id="register-password" type="password" autocomplete="new-password" formControlName="password"
+              [placeholder]="'access.createPassword' | t"
+              [attr.aria-invalid]="registerForm.controls.password.invalid && registerForm.controls.password.touched">
+            <small class="field-error" *ngIf="registerForm.controls.password.invalid && registerForm.controls.password.touched">
+              {{ registerForm.controls.password.hasError('minlength') ? ('access.passwordMinimum' | t) : ('access.passwordRequired' | t) }}
+            </small>
+          </div>
+          <div class="form-field">
+            <label for="register-confirm">{{ 'access.confirmPassword' | t }}</label>
+            <input id="register-confirm" type="password" autocomplete="new-password"
+              formControlName="confirmPassword" [placeholder]="'access.confirmPasswordPlaceholder' | t"
+              [attr.aria-invalid]="(registerForm.controls.confirmPassword.invalid || registerForm.hasError('passwordMismatch')) && registerForm.controls.confirmPassword.touched">
+            <small class="field-error" *ngIf="registerForm.controls.confirmPassword.invalid && registerForm.controls.confirmPassword.touched">
+              {{ 'access.confirmPasswordRequired' | t }}
+            </small>
+            <small class="field-error" *ngIf="registerForm.hasError('passwordMismatch') && registerForm.controls.confirmPassword.touched">
+              {{ 'access.passwordMismatch' | t }}
+            </small>
+          </div>
+          <p class="password-hint">{{ 'access.passwordMinimum' | t }}</p>
+          <button type="submit" class="primary-action" [disabled]="loading()">
+            <span *ngIf="loading()" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+            {{ loading() ? ('login.creatingAccount' | t) : ('login.createAccount' | t) }}
+          </button>
+          <p class="form-switch">{{ 'access.haveAccount' | t }}
+            <button type="button" (click)="switchToLogin()">{{ 'access.signInLink' | t }}</button>
+          </p>
+        </form>
+      </ng-template>
+    </div>
+  </section>
+</main>

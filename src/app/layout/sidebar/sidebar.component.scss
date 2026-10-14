@@ -1,0 +1,378 @@
+    :host {
+      display: contents;
+    }
+
+    .sidebar {
+      width: 240px;
+      height: 100vh;
+      position: relative;
+      background: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      border-inline-end: 1px solid var(--border);
+      flex-shrink: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: width 0.22s ease, background 0.2s, border-color 0.2s;
+    }
+
+    .sidebar.collapsed {
+      width: 64px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 0;
+        inset-inline-start: 0;
+        z-index: 200;
+        transform: translateX(-100%);
+        height: 100dvh;
+        width: 100% !important;
+      }
+
+      /* RTL: slide in from the right — uses class binding, not ancestor selector */
+      .sidebar.rtl {
+        transform: translateX(100%);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0) !important;
+      }
+    }
+
+    /* ── Brand ── */
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      min-height: 64px;
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed .sidebar-brand {
+      justify-content: center;
+      padding: 14px 0;
+    }
+
+    /* Mobile-only close button inside brand bar */
+    .mobile-close-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      margin-inline-start: auto;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .mobile-close-btn:hover {
+      background: var(--bg-hover2);
+      color: var(--text);
+    }
+
+    @media (max-width: 768px) {
+      .mobile-close-btn {
+        display: flex;
+      }
+    }
+
+    .brand-logo {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-text {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .brand-name {
+      font-weight: 800;
+      color: var(--text);
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .collapse-btn {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      padding: 0;
+      margin-inline-start: auto;
+    }
+
+    .collapse-btn:hover {
+      background: var(--bg-hover2);
+      color: var(--text);
+      border-color: var(--bg-hover2);
+    }
+
+    .collapse-btn svg {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed .collapse-btn {
+      margin-inline-start: 0;
+    }
+
+    /* RTL: flip chevrons so they point the correct direction */
+    .collapse-btn .rtl-flip {
+      transform: scaleX(-1);
+    }
+
+    /* Hide collapse button on mobile — full-width sidebar uses the × close button instead */
+    @media (max-width: 768px) {
+      .collapse-btn {
+        display: none;
+      }
+    }
+
+    /* ── Nav ── */
+    .sidebar-nav {
+      flex: 1;
+      padding: 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-weight: 600;
+    }
+
+    body.dark-mode .nav-item.active {
+      background: var(--accent);
+      color: var(--accent-fg);
+    }
+
+    .nav-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: normal;
+    }
+
+    .nav-tag {
+      position: absolute;
+      right: 25px;
+      background-color: var(--accent);
+      color: var(--accent-fg);
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .nav-tag.rtl {
+      position: absolute;
+      right: 70%;
+      background-color: var(--accent);
+      color: var(--accent-fg);
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .nav-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .sidebar.collapsed .nav-icon {
+      width: 20px;
+    }
+
+    /* ── Footer ── */
+    .sidebar-footer {
+      padding: 12px 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    .theme-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed .theme-toggle {
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border-radius: 9px;
+      padding: 7px 10px;
+      transition: background 0.15s;
+      overflow: hidden;
+    }
+
+    .user-info:hover {
+      background: var(--bg-hover);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--primary);
+      color: var(--primary-fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    body.dark-mode .user-avatar {
+      background: var(--accent);
+      color: var(--accent-fg);
+    }
+
+    .user-details {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .user-arrow {
+      font-size: 14px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed .user-info {
+      justify-content: center;
+      padding: 7px 0;
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--red);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .logout-btn:hover {
+      background: var(--red-bg);
+      border-color: var(--red);
+    }
+
+    .logout-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+    }

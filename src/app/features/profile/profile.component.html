@@ -1,0 +1,77 @@
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">{{ 'profile.title' | t }}</h1>
+  </div>
+
+  <app-loading [loading]="loading()"></app-loading>
+
+  <div *ngIf="!loading()" class="profile-grid">
+
+    <!-- Profile Info Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="avatar">{{ initial }}</div>
+        <div>
+          <div class="profile-name">{{ profile()?.fullName || profile()?.username }}</div>
+          <div class="profile-meta">
+            <span class="role-badge">{{ profile()?.role }}</span>
+            <span class="profile-email">{{ profile()?.email }}</span>
+          </div>
+          <div class="profile-since">{{ 'profile.memberSince' | t }} {{ profile()?.createdAt | date:'MMMM y' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Card -->
+    <div class="card">
+      <div class="section-title">{{ 'profile.editProfile' | t }}</div>
+      <div *ngIf="profileSuccess" class="alert alert-success">{{ profileSuccess }}</div>
+      <div *ngIf="profileError" class="alert alert-error">{{ profileError }}</div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'profile.form.username' | t }}</label>
+        <input class="form-input" [(ngModel)]="editUsername" placeholder="Username" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ 'profile.form.fullName' | t }}</label>
+        <input class="form-input" [(ngModel)]="editFullName" placeholder="Full Name (optional)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ 'profile.form.email' | t }}</label>
+        <input class="form-input" [value]="profile()?.email" disabled title="Email cannot be changed" />
+      </div>
+
+      <button class="btn btn-primary" (click)="saveProfile()" [disabled]="savingProfile()">
+        {{ savingProfile() ? ('profile.saving' | t) : ('profile.saveChanges' | t) }}
+      </button>
+    </div>
+
+    <!-- Change Password Card -->
+    <div class="card">
+      <div class="section-title">{{ 'profile.changePassword' | t }}</div>
+      <div *ngIf="pwSuccess" class="alert alert-success">{{ pwSuccess }}</div>
+      <div *ngIf="pwError" class="alert alert-error">{{ pwError }}</div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'profile.form.currentPassword' | t }}</label>
+        <input class="form-input" type="password" [(ngModel)]="currentPw" placeholder="Current password"
+          autocomplete="current-password" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ 'profile.form.newPassword' | t }}</label>
+        <input class="form-input" type="password" [(ngModel)]="newPw" placeholder="New password (min 6 chars)"
+          autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ 'profile.form.confirmPassword' | t }}</label>
+        <input class="form-input" type="password" [(ngModel)]="confirmPw" placeholder="Confirm new password"
+          autocomplete="new-password" />
+      </div>
+
+      <button class="btn btn-primary" (click)="changePassword()" [disabled]="savingPw()">
+        {{ savingPw() ? ('profile.changingPassword' | t) : ('profile.changePassword' | t) }}
+      </button>
+    </div>
+
+  </div>
+</div>

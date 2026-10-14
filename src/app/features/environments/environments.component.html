@@ -1,0 +1,384 @@
+<ng-container *ngIf="isWorkbench; else legacyEnvironments">
+  <section class="workbench-environments" aria-labelledby="environments-heading">
+    <header class="environments-workbench-header">
+      <div>
+        <div class="environment-eyebrow">{{ 'environments.workbench.eyebrow' | t }}</div>
+        <h1 id="environments-heading">{{ 'environments.title' | t }}</h1>
+        <p>{{ 'environments.workbench.subtitle' | t }}</p>
+      </div>
+      <button *ngIf="organization.canMutate() && organization.hasPermission('environments.manage')"
+        type="button" class="environment-button primary" (click)="openForm()">
+        <i class="pi pi-plus" aria-hidden="true"></i>{{ 'environments.newBtn' | t }}
+      </button>
+    </header>
+
+    <div *ngIf="organization.structuralOnly()" class="environment-notice" role="note">
+      <i class="pi pi-info-circle" aria-hidden="true"></i><span>{{ 'org.structuralOnly' | t }}</span>
+    </div>
+    <div *ngIf="readError() as message" class="environment-state error" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <div><strong>{{ message | t }}</strong><span>{{ 'environments.workbench.loadFailed' | t }}</span></div>
+      <button type="button" class="environment-button secondary" (click)="loadWorkbenchData()">{{ 'common.retry' | t }}</button>
+    </div>
+
+    <section class="environment-workspace" aria-label="Environment resource workspace">
+      <aside class="environment-explorer" aria-labelledby="environment-explorer-title">
+        <header class="environment-explorer-header">
+          <div>
+            <h2 id="environment-explorer-title">{{ 'environments.workbench.explorer' | t }}</h2>
+            <span *ngIf="!loading() && !readError()">{{ filteredCount() }} {{ 'environments.workbench.environments' | t }}</span>
+          </div>
+          <div class="environment-filters">
+            <p-dropdown [ngModel]="filterSystemId() || null" (ngModelChange)="onSysFilter($event)"
+              [options]="systems()" [optionLabel]="organization.structuralOnly() ? 'id' : 'name'"
+              optionValue="id" [filter]="true" [filterBy]="organization.structuralOnly() ? 'id' : 'name'"
+              [showClear]="true" [placeholder]="'common.allSystems' | t"
+              [attr.aria-label]="'environments.workbench.filterSystem' | t">
+            </p-dropdown>
+            <p-dropdown [ngModel]="filterEnvType() || null" (ngModelChange)="onTypeFilter($event)"
+              [options]="envTypes" optionLabel="label" optionValue="value" [showClear]="true"
+              [placeholder]="'common.allEnvs' | t" [attr.aria-label]="'environments.workbench.filterType' | t">
+            </p-dropdown>
+            <p-dropdown [ngModel]="filterStatus() || null" (ngModelChange)="onStatusFilter($event)"
+              [options]="statusOptions" optionLabel="label" optionValue="value" [showClear]="true"
+              [placeholder]="'common.allStatuses' | t" [attr.aria-label]="'environments.workbench.filterStatus' | t">
+            </p-dropdown>
+            <label class="environment-search" *ngIf="!organization.structuralOnly()">
+              <i class="pi pi-search" aria-hidden="true"></i>
+              <input type="search" [placeholder]="'environments.searchPlaceholder' | t"
+                [attr.aria-label]="'environments.searchPlaceholder' | t" [value]="searchTerm()"
+                (input)="onSearch($event)">
+            </label>
+            <button *ngIf="hasActiveFilters()" type="button" class="environment-clear" (click)="clearFilters()">
+              {{ 'common.clearFilters' | t }}
+            </button>
+          </div>
+        </header>
+
+        <div *ngIf="loading()" class="environment-loading" role="status">
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>{{ 'common.loading' | t }}
+        </div>
+        <div *ngIf="!loading() && !readError() && systemGroups().length" class="environment-list">
+          <section *ngFor="let group of systemGroups()" class="environment-system-group">
+            <header>
+              <i class="pi pi-server" aria-hidden="true"></i>
+              <span>{{ organization.structuralOnly() ? group.envs[0].systemId : group.systemName }}</span>
+              <small>{{ group.envs.length }}</small>
+            </header>
+            <button *ngFor="let environment of group.envs" type="button" class="environment-option"
+              [class.selected]="environment.id === selectedEnvironmentId()"
+              [attr.aria-pressed]="environment.id === selectedEnvironmentId()"
+              (click)="selectEnvironment(environment.id)">
+              <span class="environment-option-icon"><i class="pi pi-globe" aria-hidden="true"></i></span>
+              <span class="environment-option-copy">
+                <strong>{{ organization.structuralOnly() ? environment.id : environment.name }}</strong>
+                <small>{{ environment.environmentType }}</small>
+              </span>
+              <span class="environment-active-dot" [class.inactive]="!environment.isActive"
+                [attr.aria-label]="environment.isActive ? ('environments.active' | t) : ('environments.inactive' | t)"></span>
+              <i class="pi pi-angle-right" aria-hidden="true"></i>
+            </button>
+          </section>
+        </div>
+        <div *ngIf="!loading() && !readError() && !filteredEnvs().length" class="environment-empty">
+          <i class="pi pi-globe" aria-hidden="true"></i>
+          <strong>{{ environments().length ? ('environments.workbench.noMatches' | t) : ('environments.workbench.emptyTitle' | t) }}</strong>
+          <p>{{ environments().length ? ('environments.noEnvsMatch' | t) : ('environments.noEnvs' | t) }}</p>
+          <button *ngIf="!environments().length && organization.canMutate() && organization.hasPermission('environments.manage')"
+            type="button" class="environment-button primary" (click)="openForm()">
+            <i class="pi pi-plus" aria-hidden="true"></i>{{ 'environments.addEnv' | t }}
+          </button>
+        </div>
+      </aside>
+
+      <main class="environment-detail" *ngIf="selectedEnvironment() && !loading() && !readError()"
+        aria-label="Selected environment details">
+        <header class="environment-detail-header">
+          <div class="environment-resource-heading">
+            <span class="environment-resource-icon"><i class="pi pi-globe" aria-hidden="true"></i></span>
+            <div>
+              <div class="environment-breadcrumb">
+                <a *ngIf="!organization.structuralOnly() && selectedSystem()" routerLink="/workbench/systems">{{ selectedSystem()!.name }}</a>
+                <span *ngIf="organization.structuralOnly()">{{ selectedEnvironment()!.systemId }}</span>
+                <i class="pi pi-angle-right" aria-hidden="true"></i>
+                <span>{{ organization.structuralOnly() ? selectedEnvironment()!.id : selectedEnvironment()!.name }}</span>
+              </div>
+              <h2>{{ organization.structuralOnly() ? selectedEnvironment()!.id : selectedEnvironment()!.name }}</h2>
+              <p>{{ 'environments.workbench.belongsTo' | t }}
+                <a *ngIf="!organization.structuralOnly() && selectedSystem()" routerLink="/workbench/systems">{{ selectedSystem()!.name }}</a>
+                <span *ngIf="organization.structuralOnly()">{{ selectedEnvironment()!.systemId }}</span>
+              </p>
+            </div>
+          </div>
+          <div class="environment-detail-actions"
+            *ngIf="organization.canMutate() && (organization.hasPermission('swaggersync.run') || organization.hasPermission('environments.manage'))">
+            <button *ngIf="organization.canMutate() && organization.hasPermission('swaggersync.run')"
+              type="button" class="environment-button sync" (click)="sync(selectedEnvironment()!.id)"
+              [disabled]="syncing()[selectedEnvironment()!.id]">
+              <i [class]="syncing()[selectedEnvironment()!.id] ? 'pi pi-spin pi-spinner' : 'pi pi-sync'" aria-hidden="true"></i>
+              {{ syncing()[selectedEnvironment()!.id] ? ('environments.syncing' | t) : ('environments.sync' | t) }}
+            </button>
+            <button *ngIf="organization.canMutate() && organization.hasPermission('environments.manage')"
+              type="button" class="environment-button secondary" (click)="openForm(selectedEnvironment()!)">
+              <i class="pi pi-pencil" aria-hidden="true"></i>{{ 'common.edit' | t }}
+            </button>
+            <button *ngIf="organization.canMutate() && organization.hasPermission('environments.manage')"
+              type="button" class="environment-button danger" (click)="delete(selectedEnvironment()!.id)">
+              <i class="pi pi-trash" aria-hidden="true"></i>{{ 'common.delete' | t }}
+            </button>
+          </div>
+        </header>
+
+        <div *ngIf="syncResults()[selectedEnvironment()!.id]" class="environment-sync-result"
+          [class.success]="syncResults()[selectedEnvironment()!.id].startsWith('✓')"
+          [class.failure]="syncResults()[selectedEnvironment()!.id].startsWith('✗')" role="status">
+          {{ syncResults()[selectedEnvironment()!.id] }}
+        </div>
+
+        <section class="environment-resource-summary" aria-label="Environment summary">
+          <div class="environment-summary-item">
+            <span>{{ 'environments.workbench.system' | t }}</span>
+            <strong>{{ organization.structuralOnly() ? selectedEnvironment()!.systemId : selectedEnvironment()!.systemName }}</strong>
+          </div>
+          <div class="environment-summary-item">
+            <span>{{ 'environments.form.type' | t }}</span>
+            <strong>{{ selectedEnvironment()!.environmentType }}</strong>
+          </div>
+          <div class="environment-summary-item">
+            <span>{{ 'environments.workbench.state' | t }}</span>
+            <strong><i class="environment-active-dot" [class.inactive]="!selectedEnvironment()!.isActive" aria-hidden="true"></i>
+              {{ selectedEnvironment()!.isActive ? ('environments.active' | t) : ('environments.inactive' | t) }}</strong>
+          </div>
+          <div class="environment-summary-item">
+            <span>{{ 'environments.workbench.endpoints' | t }}</span>
+            <strong>{{ selectedEnvironment()!.endpointCount }}</strong>
+          </div>
+          <div class="environment-summary-item" *ngIf="selectedEnvironment()!.lastSyncedAt">
+            <span>{{ 'environments.workbench.lastSync' | t }}</span>
+            <strong><time [attr.datetime]="selectedEnvironment()!.lastSyncedAt">{{ selectedEnvironment()!.lastSyncedAt | date:'medium' }}</time></strong>
+          </div>
+        </section>
+
+        <section class="environment-endpoint-panel">
+          <header>
+            <div>
+              <div class="environment-eyebrow">{{ 'environments.workbench.resourcePath' | t }}</div>
+              <h3>{{ 'environments.workbench.endpoints' | t }}</h3>
+              <p>{{ 'environments.workbench.endpointHint' | t }}</p>
+            </div>
+            <a *ngIf="organization.hasPermission('endpoints.view')" class="environment-button secondary"
+              routerLink="/workbench/endpoints">
+              {{ 'environments.workbench.openEndpoints' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i>
+            </a>
+          </header>
+          <div class="environment-endpoint-count">
+            <span class="endpoint-count-icon"><i class="pi pi-code" aria-hidden="true"></i></span>
+            <div><strong>{{ selectedEnvironment()!.endpointCount }}</strong><span>{{ 'environments.workbench.endpointsAvailable' | t }}</span></div>
+          </div>
+        </section>
+      </main>
+
+      <div *ngIf="!loading() && !readError() && !selectedEnvironment() && filteredEnvs().length"
+        class="environment-no-selection" role="status">
+        {{ 'environments.workbench.selectPrompt' | t }}
+      </div>
+    </section>
+    <ng-container *ngTemplateOutlet="environmentFormModal"></ng-container>
+  </section>
+</ng-container>
+
+<ng-template #legacyEnvironments>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'environments.title' | t }}</h1>
+      <p class="page-subtitle">{{ 'environments.subtitle' | t }}</p>
+    </div>
+    <button *ngIf="auth.hasPermission('environments.manage')" class="btn-primary" (click)="openForm()">{{
+      'environments.newBtn' | t }}</button>
+  </div>
+
+  <div class="filter-bar">
+    <p-dropdown
+      [ngModel]="filterSystemId() || null"
+      (ngModelChange)="onSysFilter($event)"
+      [options]="systems()"
+      [optionLabel]="organization.structuralOnly() ? 'id' : 'name'"
+      optionValue="id"
+      [filter]="true"
+      filterPlaceHolder="Search systems…"
+      [showClear]="true"
+      [placeholder]="'common.allSystems' | t">
+    </p-dropdown>
+    <p-dropdown
+      [ngModel]="filterEnvType() || null"
+      (ngModelChange)="onTypeFilter($event)"
+      [options]="envTypes"
+      optionLabel="label"
+      optionValue="value"
+      [showClear]="true"
+      [placeholder]="'common.allEnvs' | t">
+    </p-dropdown>
+    <p-dropdown
+      [ngModel]="filterStatus() || null"
+      (ngModelChange)="onStatusFilter($event)"
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+      [showClear]="true"
+      [placeholder]="'common.allStatuses' | t">
+    </p-dropdown>
+    <input *ngIf="!organization.structuralOnly()" type="text" class="filter-search" [placeholder]="'environments.searchPlaceholder' | t"
+      (input)="onSearch($event)">
+    <button class="btn-clear" *ngIf="hasActiveFilters()" (click)="clearFilters()">{{ 'common.clearFilters' | t
+      }}</button>
+  </div>
+  <div class="filter-summary" *ngIf="hasActiveFilters()">
+    Showing {{ filteredCount() }} environment{{ filteredCount() !== 1 ? 's' : '' }}
+  </div>
+
+  <ng-container *ngTemplateOutlet="environmentFormModal"></ng-container>
+
+  <app-loading [loading]="loading()"></app-loading>
+  <p *ngIf="readError() as message" role="alert">{{ message | t }}</p>
+  <p *ngIf="organization.structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+  <div *ngIf="!loading()">
+    <!-- System groups -->
+    <div *ngFor="let group of systemGroups()" class="system-section">
+      <div class="system-section-header">
+        <span class="system-section-icon">🖥️</span>
+        <span class="system-section-name">{{ organization.structuralOnly() ? group.envs[0].systemId : group.systemName }}</span>
+        <span class="system-section-count">{{ group.envs.length }} environment{{ group.envs.length !== 1 ? 's' : ''
+          }}</span>
+      </div>
+      <div class="env-grid">
+        <div *ngFor="let env of group.envs" class="env-card">
+          <div class="env-card-top">
+            <div class="env-name-row">
+              <span class="env-name">{{ organization.structuralOnly() ? env.id : env.name }}</span>
+              <span class="active-badge" *ngIf="env.isActive">{{ 'environments.active' | t }}</span>
+            </div>
+            <span class="env-type-badge" [class]="'env-type-' + env.environmentType.toLowerCase()">{{
+              getEnvLabel(env.environmentType) }}</span>
+          </div>
+          <div class="env-details">
+            <div *ngIf="!organization.structuralOnly()" class="env-url" title="{{ env.swaggerUrl }}">🔗 {{ env.swaggerUrl || ('environments.sourcesConfigured' | t) }}</div>
+            <div class="env-meta-row">
+              <span class="env-stats">📊 {{ env.endpointCount }} endpoints</span>
+              <span class="env-sync" *ngIf="env.lastSyncedAt">🕐 {{ env.lastSyncedAt | date:'MMM d, y' }}</span>
+            </div>
+          </div>
+          <div class="env-actions">
+            <button *ngIf="auth.hasPermission('swaggersync.run')" class="btn-sm btn-sync" (click)="sync(env.id)"
+              [disabled]="syncing()[env.id]">
+              {{ syncing()[env.id] ? ('environments.syncing' | t) : ('environments.sync' | t) }}
+            </button>
+            <button *ngIf="auth.hasPermission('environments.manage')" class="btn-sm btn-secondary"
+              (click)="openForm(env)">{{ 'common.edit' | t }}</button>
+            <button *ngIf="auth.hasPermission('environments.manage')" class="btn-sm btn-danger"
+              (click)="delete(env.id)">{{ 'common.delete' | t }}</button>
+          </div>
+          <div class="sync-result" *ngIf="syncResults()[env.id]" [class.sync-ok]="syncResults()[env.id].startsWith('✓')"
+            [class.sync-err]="syncResults()[env.id].startsWith('✗')">
+            {{ syncResults()[env.id] }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!systemGroups().length" class="empty-state">
+      {{ environments().length ? ('environments.noEnvsMatch' | t) : ('environments.noEnvs' | t) }}
+    </div>
+  </div>
+</div>
+</ng-template>
+
+<ng-template #environmentFormModal>
+        <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+          <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-title-row">
+                <div class="modal-icon-wrap">🌍</div>
+                <div>
+                  <h2 class="modal-title">{{ editingId ? ('environments.modal.edit' | t) : ('environments.modal.new' | t) }}</h2>
+                  <p class="modal-subtitle">{{ 'environments.modal.subtitle' | t }}</p>
+                </div>
+              </div>
+              <button type="button" class="modal-close-btn" (click)="closeForm()">✕</button>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="submit()">
+              <div class="form-section-title">{{ 'environments.form.sectionBasic' | t }}</div>
+              <div class="form-group">
+                <label>{{ 'environments.form.system' | t }}</label>
+                <p-dropdown formControlName="systemId" [options]="systems()"
+                  [optionLabel]="organization.structuralOnly() ? 'id' : 'name'" optionValue="id"
+                  [filter]="true" filterPlaceHolder="Search systems…" [showClear]="true"
+                  [placeholder]="'common.selectSystem' | t"></p-dropdown>
+              </div>
+              <div class="form-group">
+                <label>{{ 'environments.form.name' | t }}</label>
+                <input type="text" formControlName="name" placeholder="e.g. Staging">
+              </div>
+              <div class="form-group">
+                <label>{{ 'environments.form.type' | t }}</label>
+                <p-dropdown formControlName="environmentType" [options]="envTypes" optionLabel="label" optionValue="value"></p-dropdown>
+              </div>
+              <div class="form-section-title">{{ 'environments.form.sectionConnectivity' | t }}</div>
+              <div class="form-tabs">
+                <button type="button" class="tab-btn" [class.active]="activeTab() === 'single'" (click)="activeTab.set('single')">{{ 'environments.form.tabSingle' | t }}</button>
+                <button type="button" class="tab-btn" [class.active]="activeTab() === 'multi'" (click)="activeTab.set('multi')">{{ 'environments.form.tabMulti' | t }}</button>
+              </div>
+              <div class="tab-content" *ngIf="activeTab() === 'single'">
+                <div class="url-info-banner"><span class="url-info-icon">ℹ️</span><span>{{ 'environments.form.swaggerUrlInfo' | t }}</span></div>
+                <div class="form-group">
+                  <label>{{ 'environments.form.swaggerUrl' | t }}</label>
+                  <input type="url" formControlName="swaggerUrl" placeholder="https://api.example.com/swagger/v1/swagger.json"
+                    [class.input-error]="form.get('swaggerUrl')?.invalid && form.get('swaggerUrl')?.touched">
+                  <div class="field-error" *ngIf="form.get('swaggerUrl')?.errors?.['swaggerJson'] && form.get('swaggerUrl')?.touched">
+                    Must be a JSON spec URL, e.g. <code>/swagger/v1/swagger.json</code>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>{{ 'environments.form.baseUrl' | t }}</label>
+                  <input type="url" formControlName="baseUrl" placeholder="https://api.example.com">
+                </div>
+              </div>
+              <div class="tab-content" *ngIf="activeTab() === 'multi'">
+                <div class="url-info-banner"><span class="url-info-icon">ℹ️</span><span>{{ 'environments.form.swaggerUrlInfo' | t }}</span></div>
+                <div formArrayName="sources" class="swagger-sources-list">
+                  <div *ngFor="let src of sourcesArray.controls; let i = index" [formGroupName]="i" class="swagger-source-card">
+                    <div class="source-card-header">
+                      <span class="source-card-badge">Version {{ i + 1 }}</span>
+                      <div class="source-card-header-right">
+                        <label class="source-active-toggle"><input type="checkbox" formControlName="isActive"><span>{{ 'environments.form.sourceActive' | t }}</span></label>
+                        <button type="button" class="source-remove-btn" (click)="removeSource(i)" title="Remove">✕</button>
+                      </div>
+                    </div>
+                    <div class="source-fields">
+                      <div class="source-field"><label class="source-field-label">{{ 'environments.form.sourceLabel' | t }}</label>
+                        <input type="text" formControlName="label" placeholder="e.g. v1, v2, Production" class="source-input"
+                          [class.input-error]="src.get('label')?.invalid && src.get('label')?.touched"></div>
+                      <div class="source-field"><label class="source-field-label">{{ 'environments.form.sourceUrl' | t }}</label>
+                        <input type="url" formControlName="url" placeholder="https://api.example.com/swagger/v1/swagger.json" class="source-input"
+                          [class.input-error]="src.get('url')?.invalid && src.get('url')?.touched"></div>
+                      <div class="source-field"><label class="source-field-label">{{ 'environments.form.sourceBaseUrl' | t }}</label>
+                        <input type="url" formControlName="baseUrl" placeholder="https://api.example.com" class="source-input"
+                          [class.input-error]="src.get('baseUrl')?.invalid && src.get('baseUrl')?.touched"></div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="add-source-btn" (click)="addSource()">+ {{ 'environments.form.addSource' | t }}</button>
+                <small class="field-hint">{{ 'environments.form.swaggerSourcesHint' | t }}</small>
+              </div>
+              <div class="form-group checkbox-group"><label><input type="checkbox" formControlName="isActive"> {{ 'environments.form.isActive' | t }}</label></div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+                <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+                  {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </ng-template>

@@ -1,0 +1,292 @@
+<ng-container *ngIf="isWorkbench; else legacySystems">
+  <section class="workbench-systems" aria-labelledby="systems-heading">
+    <header class="systems-workbench-header">
+      <div>
+        <div class="systems-eyebrow">{{ 'systems.workbench.eyebrow' | t }}</div>
+        <h1 id="systems-heading">{{ 'systems.title' | t }}</h1>
+        <p>{{ 'systems.workbench.subtitle' | t }}</p>
+      </div>
+      <button *ngIf="organization.canMutate() && auth.hasPermission('systems.manage')"
+        type="button" class="systems-button primary" (click)="openForm()">
+        <i class="pi pi-plus" aria-hidden="true"></i>{{ 'systems.newBtn' | t }}
+      </button>
+    </header>
+
+    <div *ngIf="organization.structuralOnly()" class="systems-notice" role="note">
+      <i class="pi pi-info-circle" aria-hidden="true"></i>
+      <span>{{ 'org.structuralOnly' | t }}</span>
+    </div>
+
+    <div *ngIf="readError() as message" class="systems-state error" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <div><strong>{{ message | t }}</strong><span>{{ 'systems.workbench.loadFailed' | t }}</span></div>
+      <button type="button" class="systems-button secondary" (click)="loadWorkbenchData()">
+        {{ 'common.retry' | t }}
+      </button>
+    </div>
+
+    <div class="systems-explorer">
+      <section class="systems-list-panel" aria-labelledby="systems-directory-title">
+        <header class="systems-list-toolbar">
+          <div>
+            <h2 id="systems-directory-title">{{ 'systems.workbench.directory' | t }}</h2>
+            <span *ngIf="!loading() && !readError()">{{ systems().length }} {{ 'systems.workbench.systemCount' | t }}</span>
+          </div>
+          <div class="systems-filters">
+            <label class="systems-search" *ngIf="!organization.structuralOnly()">
+              <i class="pi pi-search" aria-hidden="true"></i>
+              <input type="search" [placeholder]="'systems.workbench.searchPlaceholder' | t"
+                [attr.aria-label]="'systems.workbench.searchPlaceholder' | t" [value]="searchTerm"
+                (input)="onSearch($event)">
+            </label>
+            <p-dropdown [(ngModel)]="filterTeamId" (ngModelChange)="onTeamFilter($event)"
+              [options]="teams()" [optionLabel]="organization.structuralOnly() ? 'id' : 'name'"
+              optionValue="id" [showClear]="true" [placeholder]="'systems.workbench.allTeams' | t"
+              [attr.aria-label]="'systems.workbench.filterTeam' | t">
+            </p-dropdown>
+          </div>
+        </header>
+
+        <div *ngIf="loading()" class="systems-loading" role="status">
+          <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>{{ 'common.loading' | t }}
+        </div>
+        <div *ngIf="!loading() && !readError() && systems().length" class="systems-list">
+          <button *ngFor="let system of systems()" type="button" class="system-row"
+            [class.selected]="system.id === selectedSystemId()" [attr.aria-pressed]="system.id === selectedSystemId()"
+            (click)="selectSystem(system.id)">
+            <span class="system-mark"><i class="pi pi-server" aria-hidden="true"></i></span>
+            <span class="system-row-copy">
+              <strong>{{ organization.structuralOnly() ? system.id : system.name }}</strong>
+              <small>{{ organization.structuralOnly() ? system.teamId : system.teamName }}</small>
+            </span>
+            <span class="system-env-count">{{ system.environmentCount }} {{ 'systems.workbench.environments' | t }}</span>
+            <i class="pi pi-angle-right system-row-chevron" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div *ngIf="!loading() && !readError() && !systems().length" class="systems-empty" role="status">
+          <span class="empty-mark"><i class="pi pi-server" aria-hidden="true"></i></span>
+          <strong>{{ 'systems.workbench.emptyTitle' | t }}</strong>
+          <p>{{ 'systems.noSystems' | t }}</p>
+          <button *ngIf="organization.canMutate() && auth.hasPermission('systems.manage')"
+            type="button" class="systems-button primary" (click)="openForm()">
+            <i class="pi pi-plus" aria-hidden="true"></i>{{ 'systems.newBtn' | t }}
+          </button>
+        </div>
+      </section>
+
+      <section *ngIf="selectedSystem() && !loading() && !readError()" class="system-detail"
+        [attr.aria-label]="'systems.workbench.selectedSystem' | t">
+        <header class="system-detail-header">
+          <div class="system-detail-title">
+            <span class="system-detail-mark"><i class="pi pi-server" aria-hidden="true"></i></span>
+            <div>
+              <div class="systems-eyebrow">{{ 'systems.workbench.selectedSystem' | t }}</div>
+              <h2>{{ organization.structuralOnly() ? selectedSystem()!.id : selectedSystem()!.name }}</h2>
+              <p>{{ organization.structuralOnly() ? selectedSystem()!.teamId : selectedSystem()!.teamName }}</p>
+            </div>
+          </div>
+          <div class="system-detail-actions" *ngIf="organization.canMutate() && auth.hasPermission('systems.manage')">
+            <button type="button" class="systems-button secondary" (click)="openForm(selectedSystem()!)">
+              <i class="pi pi-pencil" aria-hidden="true"></i>{{ 'common.edit' | t }}
+            </button>
+            <button type="button" class="systems-button danger" (click)="delete(selectedSystem()!.id)">
+              <i class="pi pi-trash" aria-hidden="true"></i>{{ 'common.delete' | t }}
+            </button>
+          </div>
+        </header>
+
+        <div *ngIf="!organization.structuralOnly() && selectedSystem()!.description" class="system-description">
+          {{ selectedSystem()!.description }}
+        </div>
+        <div class="system-facts">
+          <div class="system-fact">
+            <span>{{ 'systems.workbench.environments' | t }}</span>
+            <strong>{{ selectedSystem()!.environmentCount }}</strong>
+          </div>
+          <div class="system-fact" *ngIf="relatedEnvironments()">
+            <span>{{ 'systems.workbench.endpoints' | t }}</span>
+            <strong>{{ selectedEndpointCount() }}</strong>
+          </div>
+          <div class="system-fact" *ngIf="!organization.structuralOnly() && selectedSystem()!.ownerName">
+            <span>{{ 'systems.form.ownerName' | t }}</span>
+            <strong>{{ selectedSystem()!.ownerName }}</strong>
+          </div>
+          <a *ngIf="!organization.structuralOnly() && selectedSystem()!.repositoryUrl"
+            class="repository-link" [href]="selectedSystem()!.repositoryUrl" target="_blank" rel="noopener noreferrer">
+            <i class="pi pi-github" aria-hidden="true"></i>{{ 'systems.workbench.repository' | t }}
+            <i class="pi pi-external-link" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <section class="system-environments" aria-labelledby="system-environments-title">
+          <header class="environments-heading">
+            <div>
+              <div class="systems-eyebrow">{{ 'systems.workbench.resourcePath' | t }}</div>
+              <h3 id="system-environments-title">{{ 'systems.workbench.environments' | t }}</h3>
+              <p>{{ 'systems.workbench.environmentHint' | t }}</p>
+            </div>
+            <a class="systems-button secondary" routerLink="/workbench/environments">
+              {{ 'systems.workbench.openEnvironments' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i>
+            </a>
+          </header>
+          <div *ngIf="relatedLoading()" class="systems-loading" role="status">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>{{ 'common.loading' | t }}
+          </div>
+          <div *ngIf="relatedError() as message" class="systems-state inline-error" role="alert">
+            <i class="pi pi-exclamation-circle" aria-hidden="true"></i><span>{{ message | t }}</span>
+          </div>
+          <div *ngIf="!relatedLoading() && !relatedError() && relatedEnvironments()?.length" class="environment-list">
+            <article *ngFor="let environment of relatedEnvironments()" class="environment-row">
+              <span class="environment-mark"><i class="pi pi-globe" aria-hidden="true"></i></span>
+              <div class="environment-copy">
+                <strong>{{ organization.structuralOnly() ? environment.id : environment.name }}</strong>
+                <span>{{ environment.environmentType }}</span>
+              </div>
+              <span class="environment-endpoints">
+                <strong>{{ environment.endpointCount }}</strong>
+                <small>{{ 'systems.workbench.endpoints' | t }}</small>
+              </span>
+              <a routerLink="/workbench/environments" class="environment-open"
+                [attr.aria-label]="'systems.workbench.openEnvironments' | t">
+                <i class="pi pi-arrow-up-right" aria-hidden="true"></i>
+              </a>
+            </article>
+          </div>
+          <div *ngIf="!relatedLoading() && !relatedError() && relatedEnvironments()?.length === 0"
+            class="environment-empty" role="status">
+            <i class="pi pi-globe" aria-hidden="true"></i>
+            <span>{{ 'systems.workbench.noEnvironments' | t }}</span>
+          </div>
+        </section>
+      </section>
+
+      <div *ngIf="showForm" class="systems-modal-overlay" (click)="closeForm()">
+          <section class="systems-modal" role="dialog" aria-modal="true"
+            [attr.aria-label]="(editingId ? 'systems.modal.edit' : 'systems.modal.new') | t"
+            (click)="$event.stopPropagation()">
+            <header class="systems-modal-header">
+              <div><span class="systems-eyebrow">{{ 'systems.workbench.eyebrow' | t }}</span>
+                <h2>{{ editingId ? ('systems.modal.edit' | t) : ('systems.modal.new' | t) }}</h2></div>
+              <button type="button" class="modal-close" (click)="closeForm()" [attr.aria-label]="'common.cancel' | t">
+                <i class="pi pi-times" aria-hidden="true"></i>
+              </button>
+            </header>
+            <form [formGroup]="form" (ngSubmit)="submit()">
+              <label class="modal-field">{{ 'systems.form.team' | t }}
+                <p-dropdown formControlName="teamId" [options]="teams()" optionLabel="name" optionValue="id"
+                  [showClear]="true" [placeholder]="'common.selectTeam' | t"></p-dropdown>
+              </label>
+              <label class="modal-field">{{ 'systems.form.systemName' | t }}<input formControlName="name"></label>
+              <label class="modal-field">{{ 'common.description' | t }}<textarea formControlName="description" rows="3"></textarea></label>
+              <label class="modal-field">{{ 'systems.form.ownerName' | t }}<input formControlName="ownerName"></label>
+              <label class="modal-field">{{ 'systems.form.ownerEmail' | t }}<input type="email" formControlName="ownerEmail"></label>
+              <label class="modal-field">{{ 'systems.form.repositoryUrl' | t }}<input type="url" formControlName="repositoryUrl"></label>
+              <footer class="systems-modal-actions">
+                <button type="button" class="systems-button secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+                <button type="submit" class="systems-button primary" [disabled]="form.invalid || saving()">
+                  {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+                </button>
+              </footer>
+            </form>
+          </section>
+      </div>
+    </div>
+  </section>
+</ng-container>
+
+<ng-template #legacySystems>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'systems.title' | t }}</h1>
+      <p class="page-subtitle">{{ 'systems.subtitle' | t }}</p>
+    </div>
+    <div class="header-actions">
+      <button *ngIf="auth.hasPermission('systems.manage')" class="btn-primary" (click)="openForm()">{{ 'systems.newBtn' | t }}</button>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-bar">
+    <p-dropdown
+      [(ngModel)]="filterTeamId"
+      (ngModelChange)="onTeamFilter($event)"
+      [options]="teams()"
+      [optionLabel]="organization.structuralOnly() ? 'id' : 'name'"
+      optionValue="id"
+      [showClear]="true"
+      placeholder="All Teams">
+    </p-dropdown>
+    <input *ngIf="!organization.structuralOnly()" type="text" placeholder="Search systems..." (input)="onSearch($event)" style="flex:1">
+  </div>
+
+  <!-- Form Modal -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">{{ editingId ? ('systems.modal.edit' | t) : ('systems.modal.new' | t) }}</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-group">
+          <label>{{ 'systems.form.team' | t }}</label>
+          <p-dropdown
+            formControlName="teamId"
+            [options]="teams()"
+            optionLabel="name"
+            optionValue="id"
+            [showClear]="true"
+            placeholder="— Select Team —">
+          </p-dropdown>
+        </div>
+        <div class="form-group">
+          <label>{{ 'systems.form.systemName' | t }}</label>
+          <input type="text" formControlName="name" placeholder="e.g. User Service">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>{{ 'systems.form.ownerName' | t }}</label>
+          <input type="text" formControlName="ownerName" placeholder="e.g. John Smith">
+        </div>
+        <div class="form-group">
+          <label>{{ 'systems.form.ownerEmail' | t }}</label>
+          <input type="email" formControlName="ownerEmail">
+        </div>
+        <div class="form-group">
+          <label>{{ 'systems.form.repositoryUrl' | t }}</label>
+          <input type="url" formControlName="repositoryUrl">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+            {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <app-loading [loading]="loading()"></app-loading>
+  <p *ngIf="readError() as message" role="alert">{{ message | t }}</p>
+  <p *ngIf="organization.structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+  <div *ngIf="!loading()" class="systems-grid">
+    <div *ngFor="let sys of systems()" class="system-card">
+      <div class="system-header">
+        <div class="system-name">{{ organization.structuralOnly() ? sys.id : sys.name }}</div>
+        <span class="team-badge">{{ organization.structuralOnly() ? sys.teamId : sys.teamName }}</span>
+      </div>
+      <p class="system-desc" *ngIf="!organization.structuralOnly()">{{ sys.description || ('common.noDescription' | t) }}</p>
+      <div class="system-meta" *ngIf="!organization.structuralOnly() && sys.ownerName">👤 {{ sys.ownerName }}</div>
+      <div class="system-meta">🌍 {{ sys.environmentCount }} env</div>
+      <div class="system-actions">
+        <button *ngIf="auth.hasPermission('systems.manage')" class="btn-sm btn-secondary" (click)="openForm(sys)">{{
+          'common.edit' | t }}</button>
+        <button *ngIf="auth.hasPermission('systems.manage')" class="btn-sm btn-danger" (click)="delete(sys.id)">{{
+          'common.delete' | t }}</button>
+      </div>
+    </div>
+    <div *ngIf="!systems().length" class="empty-state">{{ 'systems.noSystems' | t }}</div>
+  </div>
+</div>
+</ng-template>

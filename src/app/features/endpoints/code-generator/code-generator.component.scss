@@ -1,0 +1,143 @@
+    .page {
+      padding: 32px;
+    }
+
+    .back-link {
+      margin-bottom: 16px;
+    }
+
+    .back-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link a:hover {
+      color: var(--accent);
+      opacity: 0.75;
+      text-decoration: underline;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 24px;
+    }
+
+    .code-section {
+      margin-bottom: 24px;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .code-lang {
+      background: var(--bg-hover);
+      color: var(--green-text);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    .code-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-copy {
+      margin-left: auto;
+      background: var(--bg-hover);
+      color: var(--text);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-copy:hover {
+      background: var(--bg-hover2);
+    }
+
+    .code-block {
+      background: var(--bg-surface);
+      border: 1px solid var(--bg-hover);
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'Fira Code', monospace;
+      overflow-x: auto;
+      white-space: pre;
+      margin: 0;
+    }
+
+    .empty-block {
+      background: var(--bg-base);
+      border: 1px dashed var(--bg-hover2);
+      border-radius: 8px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .empty-block span {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .empty-hint {
+      color: var(--bg-hover2) !important;
+      font-size: 12px !important;
+    }
+
+    @media (max-width: 768px) {
+      .page {
+        padding: 16px;
+      }
+
+      .page-title {
+        font-size: 20px;
+      }
+
+      .code-block {
+        font-size: 12px;
+      }
+    }
+
+    .page.workbench-code-generator {
+      min-width: 0;
+      padding: 16px;
+      color: var(--wb-ink);
+    }
+
+    .workbench-code-generator .back-link a {
+      color: var(--wb-accent);
+    }
+
+    .workbench-code-generator .code-section {
+      padding: 14px;
+      border: 1px solid var(--wb-border);
+      border-radius: var(--wb-radius-sm);
+      background: var(--wb-surface);
+    }
+
+    .workbench-code-generator .code-lang {
+      background: var(--wb-accent-soft);
+      color: var(--wb-accent);
+    }
+
+    .workbench-code-generator .code-block {
+      max-width: 100%;
+      overflow: auto;
+      background: var(--wb-code);
+      border-color: var(--wb-border);
+    }

@@ -1,0 +1,22 @@
+<header class="app-header">
+  <div class="header-start">
+    <app-organization-switcher></app-organization-switcher>
+    <!-- Breadcrumb / page title slot can go here in the future -->
+  </div>
+
+  <div class="header-actions">
+    <!-- Notification bell -->
+    <app-notification-bell></app-notification-bell>
+
+    <!-- Language toggle -->
+    <button class="icon-btn lang-btn" (click)="langService.toggle()"
+      [title]="langService.lang() === 'en' ? ('header.switchToAr' | t) : ('header.switchToEn' | t)">
+      {{ langService.lang() === 'en' ? 'AR' : 'EN' }}
+    </button>
+
+    <!-- Theme toggle -->
+    <button class="icon-btn theme-btn" (click)="themeService.toggle()"
+      [title]="themeService.theme() === 'light' ? ('header.switchToDark' | t) : ('header.switchToLight' | t)"
+      [innerHTML]="themeIcon()"></button>
+  </div>
+</header>

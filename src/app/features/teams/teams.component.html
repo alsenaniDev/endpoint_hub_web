@@ -1,0 +1,338 @@
+<ng-container *ngIf="isWorkbench; else legacyTeams">
+  <section class="workbench-teams" aria-labelledby="teams-heading">
+    <header class="workbench-page-header">
+      <div class="page-heading">
+        <div class="eyebrow">{{ 'teams.workbench.eyebrow' | t }}</div>
+        <h1 id="teams-heading">{{ 'teams.title' | t }}</h1>
+        <p>{{ 'teams.subtitle' | t }}</p>
+      </div>
+      <button *ngIf="canManageTeams()" type="button" class="wb-button wb-button-primary" (click)="openForm()">
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        {{ 'teams.workbench.create' | t }}
+      </button>
+    </header>
+
+    <div *ngIf="organization.structuralOnly()" class="wb-notice" role="note">
+      <i class="pi pi-info-circle" aria-hidden="true"></i>
+      <span>{{ 'org.structuralOnly' | t }}</span>
+    </div>
+
+    <section class="wb-summary" [attr.aria-label]="'teams.workbench.summary' | t">
+      <div class="summary-item">
+        <span class="summary-label">{{ 'teams.workbench.totalTeams' | t }}</span>
+        <strong>{{ totalCount() }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">{{ 'teams.workbench.systemsOnPage' | t }}</span>
+        <strong>{{ systemsOnPage() }}</strong>
+      </div>
+      <div class="summary-item summary-context">
+        <span class="summary-label">{{ 'teams.workbench.organizationScope' | t }}</span>
+        <strong>{{ organization.structuralOnly() ? organization.activeOrganization()?.id : organization.activeOrganization()?.name }}</strong>
+      </div>
+    </section>
+
+    <div *ngIf="readError() as message" class="wb-state wb-error" role="alert">
+      <div class="state-icon"><i class="pi pi-exclamation-circle" aria-hidden="true"></i></div>
+      <div class="state-copy">
+        <strong>{{ message | t }}</strong>
+        <span>{{ 'teams.workbench.loadFailed' | t }}</span>
+      </div>
+      <button type="button" class="wb-button wb-button-secondary" (click)="loadTeams()">
+        {{ 'common.retry' | t }}
+      </button>
+    </div>
+
+    <section class="teams-workspace" [class.has-detail]="selectedTeam() && !loading() && !readError()">
+      <div class="teams-list-panel">
+        <div class="list-toolbar">
+          <div class="list-context">
+            <h2>{{ 'teams.workbench.directory' | t }}</h2>
+            <span *ngIf="!loading() && !readError()">{{ 'teams.workbench.matchingCount' | t }}</span>
+          </div>
+          <form *ngIf="!organization.structuralOnly()" class="team-search" (ngSubmit)="applySearch()">
+            <i class="pi pi-search" aria-hidden="true"></i>
+            <input [formControl]="searchControl" [placeholder]="'teams.workbench.searchPlaceholder' | t"
+              [attr.aria-label]="'teams.workbench.searchPlaceholder' | t">
+            <button type="submit" class="search-submit">{{ 'common.search' | t }}</button>
+          </form>
+        </div>
+
+        <div *ngIf="loading()" class="wb-table-wrap" role="status" [attr.aria-label]="'common.loading' | t">
+          <div class="table-skeleton" *ngFor="let row of skeletonRows">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div *ngIf="!loading() && !readError()" class="wb-table-wrap">
+          <table *ngIf="teams().length; else teamsEmpty">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'teams.workbench.columnTeam' | t }}</th>
+                <th scope="col" class="numeric-column">{{ 'teams.workbench.columnSystems' | t }}</th>
+                <th scope="col" *ngIf="!organization.structuralOnly()">{{ 'teams.form.contactEmail' | t }}</th>
+                <th scope="col">{{ 'teams.workbench.columnCreated' | t }}</th>
+                <th scope="col" class="actions-column" *ngIf="canManageTeams()">{{ 'teams.workbench.columnActions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let team of teams(); trackBy: trackTeam"
+                [class.selected]="selectedTeamId() === team.id"
+                [attr.aria-selected]="selectedTeamId() === team.id"
+                (click)="selectTeam(team)"
+                (keydown.enter)="selectTeam(team)"
+                tabindex="0">
+                <td>
+                  <div class="team-cell">
+                    <span class="team-mark" aria-hidden="true">
+                      <i class="pi pi-users"></i>
+                    </span>
+                    <span class="team-cell-copy">
+                      <strong>{{ organization.structuralOnly() ? team.id : team.name }}</strong>
+                      <small *ngIf="!organization.structuralOnly()">
+                        {{ team.description || ('common.noDescription' | t) }}
+                      </small>
+                      <small *ngIf="organization.structuralOnly()">{{ team.id }}</small>
+                    </span>
+                  </div>
+                </td>
+                <td class="numeric-column">
+                  <span class="count-badge">{{ team.systemCount }}</span>
+                </td>
+                <td *ngIf="!organization.structuralOnly()">
+                  <span class="contact-value">{{ team.contactEmail || '—' }}</span>
+                </td>
+                <td><time class="created-value" [attr.datetime]="team.createdAt">{{ team.createdAt | date:'mediumDate' }}</time></td>
+                <td class="row-actions" *ngIf="canManageTeams()" (click)="$event.stopPropagation()">
+                  <button type="button" class="icon-action" (click)="openForm(team)"
+                    [attr.aria-label]="'common.edit' | t" [title]="'common.edit' | t">
+                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="icon-action danger-action" (click)="delete(team.id)"
+                    [attr.aria-label]="'common.delete' | t" [title]="'common.delete' | t">
+                    <i class="pi pi-trash" aria-hidden="true"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <ng-template #teamsEmpty>
+            <div class="wb-empty" role="status">
+              <span class="empty-mark"><i class="pi pi-users" aria-hidden="true"></i></span>
+              <strong>{{ 'teams.workbench.emptyTitle' | t }}</strong>
+              <p>{{ 'teams.noTeams' | t }}</p>
+              <button *ngIf="canManageTeams()" type="button" class="wb-button wb-button-primary" (click)="openForm()">
+                <i class="pi pi-plus" aria-hidden="true"></i>{{ 'teams.workbench.create' | t }}
+              </button>
+            </div>
+          </ng-template>
+        </div>
+
+        <footer *ngIf="!loading() && !readError() && totalPages() > 0" class="table-footer">
+          <span>{{ 'teams.workbench.pageSummary' | t }} {{ pageNumber() }} / {{ totalPages() }}</span>
+          <div class="pagination-controls">
+            <button type="button" class="wb-button wb-button-secondary wb-button-small"
+              [disabled]="pageNumber() <= 1" (click)="goToPage(pageNumber() - 1)">
+              <i class="pi pi-angle-left" aria-hidden="true"></i>{{ 'common.previous' | t }}
+            </button>
+            <button type="button" class="wb-button wb-button-secondary wb-button-small"
+              [disabled]="pageNumber() >= totalPages()" (click)="goToPage(pageNumber() + 1)">
+              {{ 'common.next' | t }}<i class="pi pi-angle-right" aria-hidden="true"></i>
+            </button>
+          </div>
+        </footer>
+      </div>
+
+      <aside *ngIf="selectedTeam() && !loading() && !readError()" class="team-context-panel"
+        [attr.aria-label]="'teams.workbench.selectedTeam' | t">
+        <header class="context-panel-header">
+          <div>
+            <span class="eyebrow">{{ 'teams.workbench.selectedTeam' | t }}</span>
+            <h2>{{ organization.structuralOnly() ? ('teams.workbench.structuralRecord' | t) : selectedTeam()!.name }}</h2>
+          </div>
+          <button *ngIf="canManageTeams()" type="button" class="wb-button wb-button-secondary wb-button-small"
+            (click)="openForm(selectedTeam()!)">
+            <i class="pi pi-pencil" aria-hidden="true"></i>{{ 'common.edit' | t }}
+          </button>
+        </header>
+
+        <div class="context-fields">
+          <div class="context-field">
+            <span>{{ 'teams.workbench.fieldId' | t }}</span>
+            <code>{{ selectedTeam()!.id }}</code>
+          </div>
+          <div class="context-field">
+            <span>{{ 'teams.workbench.columnSystems' | t }}</span>
+            <strong>{{ selectedTeam()!.systemCount }}</strong>
+          </div>
+          <div class="context-field">
+            <span>{{ 'teams.workbench.columnCreated' | t }}</span>
+            <time [attr.datetime]="selectedTeam()!.createdAt">{{ selectedTeam()!.createdAt | date:'mediumDate' }}</time>
+          </div>
+          <ng-container *ngIf="!organization.structuralOnly()">
+            <div class="context-field">
+              <span>{{ 'teams.form.description' | t }}</span>
+              <p>{{ selectedTeam()!.description || ('common.noDescription' | t) }}</p>
+            </div>
+            <div class="context-field" *ngIf="selectedTeam()!.contactEmail">
+              <span>{{ 'teams.form.contactEmail' | t }}</span>
+              <a [href]="'mailto:' + selectedTeam()!.contactEmail">{{ selectedTeam()!.contactEmail }}</a>
+            </div>
+            <div class="context-field" *ngIf="selectedTeam()!.slackChannel">
+              <span>{{ 'teams.form.slackChannel' | t }}</span>
+              <strong>{{ selectedTeam()!.slackChannel }}</strong>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="context-panel-footer" *ngIf="canManageTeams()">
+          <button type="button" class="wb-button wb-button-danger" (click)="delete(selectedTeam()!.id)">
+            <i class="pi pi-trash" aria-hidden="true"></i>{{ 'common.delete' | t }}
+          </button>
+        </div>
+      </aside>
+    </section>
+
+    <p *ngIf="mutationError() as message" class="mutation-error" role="alert">{{ message | t }}</p>
+
+    <div *ngIf="showForm" class="drawer-backdrop" (click)="closeForm()">
+      <aside class="team-drawer" role="dialog" aria-modal="true"
+        [attr.aria-label]="editingId ? ('teams.modal.edit' | t) : ('teams.modal.new' | t)"
+        (click)="$event.stopPropagation()">
+        <header class="drawer-header">
+          <div>
+            <span class="eyebrow">{{ 'teams.workbench.drawerEyebrow' | t }}</span>
+            <h2>{{ editingId ? ('teams.modal.edit' | t) : ('teams.modal.new' | t) }}</h2>
+            <p>{{ 'teams.workbench.drawerDescription' | t }}</p>
+          </div>
+          <button type="button" class="icon-action" (click)="closeForm()" [disabled]="saving()"
+            [attr.aria-label]="'common.close' | t"><i class="pi pi-times" aria-hidden="true"></i></button>
+        </header>
+
+        <form class="team-form" [formGroup]="form" (ngSubmit)="submit()">
+          <div class="form-group">
+            <label for="wb-team-name">{{ 'teams.form.name' | t }}</label>
+            <input id="wb-team-name" type="text" formControlName="name" maxlength="100" required>
+            <small *ngIf="form.controls.name.touched && form.controls.name.hasError('required')" class="field-error">
+              {{ 'teams.workbench.nameRequired' | t }}
+            </small>
+            <small *ngIf="form.controls.name.touched && form.controls.name.hasError('maxlength')" class="field-error">
+              {{ 'teams.workbench.nameTooLong' | t }}
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="wb-team-description">{{ 'teams.form.description' | t }}</label>
+            <textarea id="wb-team-description" formControlName="description" rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="wb-team-email">{{ 'teams.form.contactEmail' | t }}</label>
+            <input id="wb-team-email" type="email" formControlName="contactEmail" autocomplete="email">
+            <small *ngIf="form.controls.contactEmail.touched && form.controls.contactEmail.hasError('email')" class="field-error">
+              {{ 'teams.workbench.emailInvalid' | t }}
+            </small>
+          </div>
+          <div class="form-group">
+            <label for="wb-team-slack">{{ 'teams.form.slackChannel' | t }}</label>
+            <input id="wb-team-slack" type="text" formControlName="slackChannel">
+          </div>
+          <p *ngIf="mutationError() as message" class="mutation-error" role="alert">{{ message | t }}</p>
+
+          <footer class="drawer-actions">
+            <button type="button" class="wb-button wb-button-secondary" (click)="closeForm()" [disabled]="saving()">
+              {{ 'common.cancel' | t }}
+            </button>
+            <button type="submit" class="wb-button wb-button-primary" [disabled]="form.invalid || saving()">
+              <i class="pi pi-check" aria-hidden="true"></i>
+              {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+            </button>
+          </footer>
+        </form>
+      </aside>
+    </div>
+
+    <div *ngIf="pendingDeleteId()" class="dialog-backdrop" (click)="pendingDeleteId.set(null)">
+      <section class="delete-dialog" role="alertdialog" aria-modal="true"
+        [attr.aria-label]="'teams.deleteTeam' | t" (click)="$event.stopPropagation()">
+        <span class="delete-icon"><i class="pi pi-trash" aria-hidden="true"></i></span>
+        <h2>{{ 'teams.deleteTeam' | t }}</h2>
+        <p>{{ 'teams.workbench.deleteConfirmation' | t }}</p>
+        <footer>
+          <button type="button" class="wb-button wb-button-secondary" (click)="pendingDeleteId.set(null)" [disabled]="deleting()">
+            {{ 'common.cancel' | t }}
+          </button>
+          <button type="button" class="wb-button wb-button-danger" (click)="confirmDelete()" [disabled]="deleting()">
+            <i class="pi pi-trash" aria-hidden="true"></i>{{ 'common.delete' | t }}
+          </button>
+        </footer>
+      </section>
+    </div>
+  </section>
+</ng-container>
+
+<ng-template #legacyTeams>
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ 'teams.title' | t }}</h1>
+        <p class="page-subtitle">{{ 'teams.subtitle' | t }}</p>
+      </div>
+      <button *ngIf="auth.hasPermission('teams.manage')" class="btn-primary" (click)="openForm()">{{ 'teams.newBtn' | t
+        }}</button>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2 class="modal-title">{{ editingId ? ('teams.modal.edit' | t) : ('teams.modal.new' | t) }}</h2>
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="form-group">
+            <label>{{ 'teams.form.name' | t }}</label>
+            <input type="text" formControlName="name" placeholder="e.g. Platform Team">
+          </div>
+          <div class="form-group">
+            <label>{{ 'teams.form.description' | t }}</label>
+            <textarea formControlName="description" rows="3" placeholder="What does this team build?"></textarea>
+          </div>
+          <div class="form-group">
+            <label>{{ 'teams.form.contactEmail' | t }}</label>
+            <input type="email" formControlName="contactEmail" placeholder="team@company.com">
+          </div>
+          <div class="form-group">
+            <label>{{ 'teams.form.slackChannel' | t }}</label>
+            <input type="text" formControlName="slackChannel" placeholder="#platform-team">
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+            <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
+              {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <app-loading [loading]="loading()"></app-loading>
+    <p *ngIf="readError() as message" role="alert">{{ message | t }}</p>
+    <p *ngIf="organization.structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+
+    <div *ngIf="!loading()" class="teams-grid">
+      <div *ngFor="let team of teams()" class="team-card">
+        <div class="team-card-header">
+          <div class="team-avatar">{{ organization.structuralOnly() ? '#' : team.name[0] }}</div>
+          <div class="team-info">
+            <div class="team-name">{{ organization.structuralOnly() ? team.id : team.name }}</div>
+            <div class="team-meta">{{ team.systemCount }} system(s)</div>
+          </div>
+        </div>
+        <p class="team-desc" *ngIf="!organization.structuralOnly()">{{ team.description || ('common.noDescription' | t) }}</p>
+        <div class="team-contact" *ngIf="!organization.structuralOnly() && team.contactEmail">📧 {{ team.contactEmail }}</div>
+        <div class="team-contact" *ngIf="!organization.structuralOnly() && team.slackChannel">💬 {{ team.slackChannel }}</div>
+        <div class="team-actions">
+          <button *ngIf="auth.hasPermission('teams.manage')" class="btn-sm btn-secondary" (click)="openForm(team)">{{ 'common.edit' | t }}</button>
+          <button *ngIf="auth.hasPermission('teams.manage')" class="btn-sm btn-danger" (click)="delete(team.id)">{{ 'common.delete' | t }}</button>
+        </div>
+      </div>
+      <div *ngIf="!teams().length" class="empty-state">{{ 'teams.noTeams' | t }}</div>
+    </div>
+  </div>
+</ng-template>

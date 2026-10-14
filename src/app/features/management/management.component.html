@@ -1,0 +1,203 @@
+<main class="management-page" aria-labelledby="management-title">
+  <nav *ngIf="isWorkbench" class="management-context-nav" [attr.aria-label]="'org.settings' | t">
+    <a routerLink="/workbench/settings/members">{{ 'org.settings' | t }}</a>
+    <span aria-hidden="true">/</span>
+    <a routerLink="/workbench/overview">{{ 'workbench.nav.overview' | t }}</a>
+  </nav>
+  <header class="management-heading">
+    <div class="heading-mark" aria-hidden="true"><i class="pi pi-sliders-h"></i></div>
+    <div>
+      <p class="eyebrow">{{ 'management.eyebrow' | t }}</p>
+      <h1 id="management-title">{{ 'management.title' | t }}</h1>
+      <p class="page-intro">{{ 'management.intro' | t }}</p>
+    </div>
+  </header>
+
+  <aside class="scope-notice" role="note">
+    <i class="pi pi-shield" aria-hidden="true"></i>
+    <div>
+      <h2>{{ 'management.scopeTitle' | t }}</h2>
+      <p>{{ 'management.boundary' | t }}</p>
+      <div class="scope-details">
+        <div class="scope-organization">
+          <span>{{ 'org.active' | t }}</span>
+          <code>{{ context.activeOrganizationId() }}</code>
+        </div>
+        <p>{{ 'management.knownIds' | t }}</p>
+      </div>
+    </div>
+  </aside>
+
+  <div *ngIf="!available().length" class="state-message denied-message" role="alert">
+    <i class="pi pi-lock" aria-hidden="true"></i>
+    <p>{{ 'org.forbidden' | t }}</p>
+  </div>
+
+  <div *ngIf="error() as message" class="state-message error-message" role="alert">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <p>{{ message | t }}</p>
+  </div>
+  <div *ngIf="success() as message" class="state-message success-message" role="status">
+    <i class="pi pi-check-circle" aria-hidden="true"></i>
+    <p>{{ message | t }}</p>
+  </div>
+  <p *ngIf="resultId() as id" class="result-id">
+    <span>{{ 'management.resultId' | t }}</span>
+    <code>{{ id }}</code>
+  </p>
+
+  <div class="management-layout" *ngIf="available().length">
+    <section class="command-card" aria-labelledby="command-heading">
+      <header class="card-heading">
+        <span class="step-number" aria-hidden="true">01</span>
+        <div>
+          <h2 id="command-heading">{{ 'management.commandBuilder' | t }}</h2>
+          <p>{{ 'management.commandBuilderHint' | t }}</p>
+        </div>
+      </header>
+
+      <form (ngSubmit)="submit()">
+        <fieldset [disabled]="busy()">
+          <legend class="visually-hidden">{{ 'management.commandBuilder' | t }}</legend>
+          <div class="selection-grid">
+            <label class="field">
+              <span>{{ 'management.resource' | t }}</span>
+              <select class="control" name="resource" [ngModel]="resource()" (ngModelChange)="selectResource($event)">
+                <option *ngFor="let item of available()" [ngValue]="item.value">{{ item.label | t }}</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>{{ 'management.operation' | t }}</span>
+              <select class="control" name="operation" [ngModel]="operation()" (ngModelChange)="selectOperation($event)">
+                <option *ngFor="let item of operations()" [ngValue]="item">{{ ('management.' + item) | t }}</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="command-intent" [class.destructive]="operation() === 'delete'">
+            <i [class]="operation() === 'delete' ? 'pi pi-exclamation-triangle' : 'pi pi-info-circle'"
+              aria-hidden="true"></i>
+            <div>
+              <strong>{{ ('management.' + operation()) | t }}</strong>
+              <p>{{ ('management.operationHelp.' + operation()) | t }}</p>
+            </div>
+          </div>
+
+          <section class="command-fields" aria-labelledby="target-fields-heading">
+            <h3 id="target-fields-heading">{{ 'management.targetFields' | t }}</h3>
+            <label *ngIf="operation() !== 'create'" class="field">
+              <span>{{ 'management.resourceId' | t }}</span>
+              <input class="control code-input" name="id" [(ngModel)]="id" required autocomplete="off">
+              <small>{{ 'management.resourceIdHelp' | t }}</small>
+            </label>
+            <label *ngIf="resource() === 'sources' || (operation() !== 'delete' && resource() === 'systems') || (operation() === 'create' && resource() === 'environments')"
+              class="field">
+              <span>{{ (resource() === 'systems' ? 'management.teamId' : resource() === 'environments' ? 'management.systemId' : 'management.environmentId') | t }}</span>
+              <input class="control code-input" name="parentId" [(ngModel)]="parentId" required autocomplete="off">
+              <small>{{ 'management.parentIdHelp' | t }}</small>
+            </label>
+          </section>
+
+          <section *ngIf="operation() === 'create' || operation() === 'replace'" class="command-fields"
+            aria-labelledby="resource-fields-heading">
+            <h3 id="resource-fields-heading">{{ 'management.resourceFields' | t }}</h3>
+            <div class="field-grid">
+              <label class="field">
+                <span>{{ 'common.name' | t }}</span>
+                <input class="control" name="name" [(ngModel)]="name" required autocomplete="off">
+              </label>
+              <label *ngIf="resource() === 'teams' || resource() === 'systems'" class="field">
+                <span>{{ 'common.description' | t }}</span>
+                <textarea class="control" name="description" [(ngModel)]="description" rows="3"></textarea>
+              </label>
+              <ng-container *ngIf="resource() === 'teams'">
+                <label class="field">
+                  <span>{{ 'management.contactEmail' | t }}</span>
+                  <input class="control" name="contactEmail" [(ngModel)]="contactEmail" autocomplete="email">
+                </label>
+                <label class="field">
+                  <span>{{ 'management.slackChannel' | t }}</span>
+                  <input class="control" name="slackChannel" [(ngModel)]="slackChannel" autocomplete="off">
+                </label>
+              </ng-container>
+              <ng-container *ngIf="resource() === 'systems'">
+                <label class="field">
+                  <span>{{ 'management.ownerName' | t }}</span>
+                  <input class="control" name="ownerName" [(ngModel)]="ownerName" required autocomplete="name">
+                </label>
+                <label class="field">
+                  <span>{{ 'management.ownerEmail' | t }}</span>
+                  <input class="control" name="ownerEmail" [(ngModel)]="ownerEmail" autocomplete="email">
+                </label>
+                <label class="field">
+                  <span>{{ 'management.ownerContact' | t }}</span>
+                  <input class="control" name="ownerContact" [(ngModel)]="ownerContact" autocomplete="off">
+                </label>
+                <label class="field">
+                  <span>{{ 'management.repositoryUrl' | t }}</span>
+                    <input class="control" name="repositoryUrl" [(ngModel)]="repositoryUrl" autocomplete="url">
+                </label>
+              </ng-container>
+              <ng-container *ngIf="resource() === 'environments' || resource() === 'sources'">
+                <label *ngIf="resource() === 'environments'" class="field">
+                  <span>{{ 'management.environmentType' | t }}</span>
+                  <select class="control" name="environmentType" [(ngModel)]="environmentType">
+                    <option *ngFor="let type of environmentTypes" [ngValue]="type">{{ type }}</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>{{ 'management.swaggerUrl' | t }}</span>
+                  <input class="control" name="swaggerUrl" [(ngModel)]="swaggerUrl" autocomplete="url">
+                </label>
+                <label class="field">
+                  <span>{{ 'management.baseUrl' | t }}</span>
+                  <input class="control" name="baseUrl" [(ngModel)]="baseUrl"
+                    [required]="resource() === 'sources'" autocomplete="url">
+                </label>
+                <label class="field">
+                  <span>{{ 'common.status' | t }}</span>
+                  <select class="control" name="active" [(ngModel)]="active" required>
+                    <option [ngValue]="null" disabled>{{ 'management.selectStatus' | t }}</option>
+                    <option [ngValue]="true">{{ 'common.active' | t }}</option>
+                    <option [ngValue]="false">{{ 'common.inactive' | t }}</option>
+                  </select>
+                </label>
+              </ng-container>
+            </div>
+          </section>
+
+          <section *ngIf="operation() === 'notes'" class="command-fields" aria-labelledby="notes-fields-heading">
+            <h3 id="notes-fields-heading">{{ 'management.notesFields' | t }}</h3>
+            <div class="field-grid">
+              <label class="field">
+                <span>{{ 'management.notes' | t }}</span>
+                <textarea class="control" name="notes" [(ngModel)]="notes" rows="4"></textarea>
+              </label>
+              <label class="field">
+                <span>{{ 'management.usedInPages' | t }}</span>
+                <textarea class="control" name="usedInPages" [(ngModel)]="usedInPages" rows="4"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <label *ngIf="operation() !== 'create'" class="confirmation"
+            [class.destructive]="operation() === 'delete'">
+            <input type="checkbox" name="acknowledged" [(ngModel)]="acknowledged" required>
+            <span>
+              <i *ngIf="operation() === 'delete'" class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+              {{ (operation() === 'delete' ? 'management.confirmDelete' : operation() === 'notes' ? 'management.confirmNotes' : 'management.confirmReplace') | t }}
+            </span>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" [class.delete-action]="operation() === 'delete'">
+              <i [class]="operation() === 'delete' ? 'pi pi-trash' : operation() === 'create' ? 'pi pi-plus' : 'pi pi-check'"
+                aria-hidden="true"></i>
+              <span>{{ (busy() ? 'common.saving' : 'management.action.' + operation()) | t }}</span>
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  </div>
+</main>

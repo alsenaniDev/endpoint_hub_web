@@ -1,0 +1,23 @@
+<main class="access-denied-page">
+  <header class="access-denied-header">
+    <a routerLink="/workbench" class="brand" [attr.aria-label]="'workbench.brandLabel' | t">
+      <span class="brand-mark" aria-hidden="true">&lt;&gt;</span>
+      <span>ENDPOINTS HUB</span>
+    </a>
+    <span class="header-context" *ngIf="organization.ready()">
+      {{ 'accessDenied.organization' | t }}:
+      {{ organization.structuralOnly() ? organization.activeOrganizationId() : organization.activeOrganization()?.name }}
+    </span>
+  </header>
+
+  <section class="denial-content" aria-labelledby="access-denied-title">
+    <div class="denial-card" role="status">
+      <span class="denial-icon" aria-hidden="true"><i class="pi pi-lock"></i></span>
+      <p class="eyebrow">{{ 'accessDenied.title' | t }}</p>
+      <h1 id="access-denied-title">
+        {{ organization.ready() ? ('accessDenied.permission' | t) : ('accessDenied.context' | t) }}
+      </h1>
+      <a [routerLink]="returnRoute" class="organization-link">{{ 'accessDenied.return' | t }}</a>
+    </div>
+  </section>
+</main>

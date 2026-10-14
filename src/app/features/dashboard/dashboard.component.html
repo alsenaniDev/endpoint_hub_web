@@ -1,0 +1,418 @@
+<ng-container *ngIf="workbench; else legacyDashboard">
+  <main class="overview-workspace" aria-labelledby="overview-title">
+    <header class="overview-header">
+      <div class="overview-heading">
+        <nav class="overview-breadcrumb" aria-label="Workspace context">
+          <span>{{ overviewOrganizationName() || ('access.accessContext' | t) }}</span>
+          <span aria-hidden="true">/</span>
+          <span>{{ 'dashboard.title' | t }}</span>
+        </nav>
+        <h1 id="overview-title">{{ overviewOrganizationName() || ('dashboard.title' | t) }}</h1>
+        <p>{{ 'overview.subtitle' | t }}</p>
+      </div>
+      <nav class="overview-actions" aria-label="Quick workspace actions">
+        <a *ngIf="canOpenEndpoints()" class="overview-button" routerLink="/workbench/endpoints">
+          <i class="pi pi-link" aria-hidden="true"></i>{{ 'overview.openEndpoints' | t }}
+        </a>
+        <a *ngIf="canOpenSystems()" class="overview-button primary" routerLink="/workbench/systems">
+          <i class="pi pi-server" aria-hidden="true"></i>{{ 'overview.browseSystems' | t }}
+        </a>
+      </nav>
+    </header>
+
+    <div class="overview-state loading-state" *ngIf="loading()" role="status">
+      <span class="pi pi-spin pi-spinner" aria-hidden="true"></span>{{ 'dashboard.loadingStats' | t }}
+    </div>
+    <div class="overview-state error-state" *ngIf="!loading() && errorKey()" role="alert">
+      <span class="pi pi-exclamation-circle" aria-hidden="true"></span>
+      <span>{{ errorKey()! | t }}</span>
+    </div>
+    <div class="overview-state error-state" *ngIf="!loading() && !errorKey() && contractError()" role="alert">
+      <span class="pi pi-exclamation-circle" aria-hidden="true"></span>
+      <span>{{ 'org.requestFailed' | t }}</span>
+    </div>
+
+    <ng-container *ngIf="!loading() && !errorKey() && !contractError() && stats() as overview">
+      <section class="overview-counts" aria-label="Organization resource counts">
+        <article class="overview-count">
+          <span class="count-label">{{ 'dashboard.stat.teams' | t }}</span>
+          <strong>{{ overview.totalTeams }}</strong>
+          <a *ngIf="canOpenTeams()" routerLink="/workbench/teams">{{ 'overview.viewTeams' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i></a>
+        </article>
+        <article class="overview-count">
+          <span class="count-label">{{ 'dashboard.stat.systems' | t }}</span>
+          <strong>{{ overview.totalSystems }}</strong>
+          <a *ngIf="canOpenSystems()" routerLink="/workbench/systems">{{ 'overview.viewSystems' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i></a>
+        </article>
+        <article class="overview-count">
+          <span class="count-label">{{ 'dashboard.stat.environments' | t }}</span>
+          <strong>{{ overview.totalEnvironments }}</strong>
+          <a *ngIf="canOpenEnvironments()" routerLink="/workbench/environments">{{ 'overview.viewEnvironments' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i></a>
+        </article>
+        <article class="overview-count endpoints-count">
+          <span class="count-label">{{ 'dashboard.stat.uniqueEndpoints' | t }}</span>
+          <strong>{{ overview.uniqueEndpoints }}</strong>
+          <span class="count-context">{{ overview.totalEndpoints }} {{ 'dashboard.stat.acrossAllEnvs' | t }}</span>
+          <a *ngIf="canOpenEndpoints()" routerLink="/workbench/endpoints">{{ 'overview.viewEndpoints' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i></a>
+        </article>
+      </section>
+
+      <section class="operational-summary" aria-label="Endpoint and Swagger operational counts">
+        <div class="operational-heading">
+          <div>
+            <h2>{{ 'overview.operationalStatus' | t }}</h2>
+            <p>{{ 'overview.operationalSubtitle' | t }}</p>
+          </div>
+          <a *ngIf="canOpenSwagger()" routerLink="/workbench/swagger">{{ 'overview.openSwagger' | t }}<i class="pi pi-arrow-up-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="signal-list">
+          <div class="signal-item">
+            <span class="signal-dot signal-new" aria-hidden="true"></span>
+            <span>{{ 'dashboard.stat.new' | t }}</span><strong>{{ overview.newEndpoints }}</strong>
+          </div>
+          <div class="signal-item">
+            <span class="signal-dot signal-modified" aria-hidden="true"></span>
+            <span>{{ 'dashboard.stat.modified' | t }}</span><strong>{{ overview.modifiedEndpoints }}</strong>
+          </div>
+          <div class="signal-item">
+            <span class="signal-dot signal-deleted" aria-hidden="true"></span>
+            <span>{{ 'dashboard.stat.deleted' | t }}</span><strong>{{ overview.deletedEndpoints }}</strong>
+          </div>
+          <div class="signal-item">
+            <span class="signal-dot signal-broken" aria-hidden="true"></span>
+            <span>{{ 'dashboard.stat.brokenUrls' | t }}</span><strong>{{ overview.brokenSwaggerUrls }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <div class="overview-panels">
+        <section class="overview-panel resource-panel">
+          <header class="panel-heading">
+            <div>
+              <h2>{{ 'overview.resourceHierarchy' | t }}</h2>
+              <p>{{ 'overview.resourceHierarchyHint' | t }}</p>
+            </div>
+            <a *ngIf="canOpenSystems()" routerLink="/workbench/systems" [attr.aria-label]="'overview.viewSystems' | t">
+              <i class="pi pi-arrow-up-right" aria-hidden="true"></i>
+            </a>
+          </header>
+          <div class="overview-table-scroll" *ngIf="groupedBySystem().length; else noResources">
+            <table class="overview-table">
+              <thead>
+                <tr>
+                  <th>{{ 'dashboard.col.system' | t }}</th>
+                  <th>{{ 'overview.environments' | t }}</th>
+                  <th class="number-cell">{{ 'dashboard.stat.uniqueEndpoints' | t }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let group of groupedBySystem()">
+                  <td>
+                    <a *ngIf="canOpenSystems()" [routerLink]="'/workbench/systems'">{{ group.systemName }}</a>
+                    <span *ngIf="!canOpenSystems()">{{ group.systemName }}</span>
+                  </td>
+                  <td>
+                    <a *ngIf="canOpenEnvironments()" [routerLink]="'/workbench/environments'">
+                      {{ group.envCount }} <span>{{ group.envCount === 1 ? ('dashboard.env' | t) : ('dashboard.envs' | t) }}</span>
+                    </a>
+                    <span *ngIf="!canOpenEnvironments()">{{ group.envCount }}</span>
+                  </td>
+                  <td class="number-cell">{{ group.totalEndpoints }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #noResources>
+            <div class="panel-empty">
+              <i class="pi pi-sitemap" aria-hidden="true"></i>
+              <p>{{ allResourceCountsAreZero() ? ('overview.noResources' | t) : ('overview.noEndpointBreakdown' | t) }}</p>
+              <a *ngIf="canOpenSystems() && allResourceCountsAreZero()" routerLink="/workbench/systems">
+                {{ 'overview.browseSystems' | t }}<i class="pi pi-arrow-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </ng-template>
+        </section>
+
+        <section class="overview-panel sync-panel">
+          <header class="panel-heading">
+            <div>
+              <h2>{{ 'dashboard.recentSyncs' | t }}</h2>
+              <p>{{ 'overview.syncHint' | t }}</p>
+            </div>
+            <a *ngIf="canOpenSwagger()" routerLink="/workbench/swagger" [attr.aria-label]="'overview.openSwagger' | t">
+              <i class="pi pi-arrow-up-right" aria-hidden="true"></i>
+            </a>
+          </header>
+          <div class="sync-list" *ngIf="latestSyncs().length; else noSyncActivity">
+            <article class="sync-entry" *ngFor="let sync of latestSyncs(); let i = index">
+              <span class="sync-status-dot" [ngClass]="{
+                'sync-success': sync.status === 'Success',
+                'sync-failed': sync.status === 'Failed',
+                'sync-partial': sync.status === 'Partial'
+              }" aria-hidden="true"></span>
+              <div class="sync-entry-main">
+                <div class="sync-entry-title">
+                  <strong>{{ sync.systemName }}</strong>
+                  <span class="status-label" [ngClass]="{
+                    'status-success': sync.status === 'Success',
+                    'status-failed': sync.status === 'Failed',
+                    'status-partial': sync.status === 'Partial'
+                  }">{{ sync.status }}</span>
+                </div>
+                <p>{{ sync.environmentName }}<span *ngIf="sync.swaggerSourceLabel"> · {{ sync.swaggerSourceLabel }}</span></p>
+                <button *ngIf="sync.status === 'Failed' && sync.errorMessage" type="button"
+                  class="sync-error-toggle" (click)="toggleSyncAt(i)" [attr.aria-expanded]="isSyncExpanded(i)">
+                  {{ (isSyncExpanded(i) ? 'dashboard.hideError' : 'dashboard.showError') | t }}
+                </button>
+                <div class="sync-error-detail" *ngIf="isSyncExpanded(i)">
+                  <strong>{{ 'dashboard.errorReason' | t }}:</strong> {{ sync.errorMessage }}
+                  <a *ngIf="sync.swaggerSourceUrl" [href]="sync.swaggerSourceUrl" target="_blank" rel="noopener noreferrer">
+                    {{ 'dashboard.swaggerUrl' | t }}
+                  </a>
+                </div>
+              </div>
+              <time [attr.datetime]="sync.syncedAt">{{ sync.syncedAt | date:'short' }}</time>
+            </article>
+          </div>
+          <ng-template #noSyncActivity>
+            <div class="panel-empty compact-empty">
+              <i class="pi pi-history" aria-hidden="true"></i>
+              <p>{{ 'dashboard.noSyncs' | t }}</p>
+              <a *ngIf="canOpenSwagger()" routerLink="/workbench/swagger">{{ 'overview.openSwagger' | t }}</a>
+            </div>
+          </ng-template>
+        </section>
+      </div>
+
+      <section class="overview-governance" *ngIf="canOpenGovernance()">
+        <div>
+          <span class="governance-icon pi pi-shield" aria-hidden="true"></span>
+          <div>
+            <h2>{{ 'gov.title' | t }}</h2>
+            <p>{{ 'overview.governanceHint' | t }}</p>
+          </div>
+        </div>
+        <a routerLink="/workbench/governance">{{ 'overview.openGovernance' | t }}<i class="pi pi-arrow-right" aria-hidden="true"></i></a>
+      </section>
+    </ng-container>
+  </main>
+</ng-container>
+
+<ng-template #legacyDashboard>
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">{{ 'dashboard.title' | t }}</h1>
+    <p class="page-subtitle">{{ 'dashboard.subtitle' | t }}</p>
+  </div>
+  <app-loading [loading]="loading()" [message]="'dashboard.loadingStats' | t"></app-loading>
+
+  <p *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+  <p *ngIf="contractError() && !errorKey()" role="alert">{{ 'org.requestFailed' | t }}</p>
+  <p *ngIf="structuralOnly()" role="note">{{ 'org.structuralOnly' | t }}</p>
+  <div *ngIf="!loading() && !errorKey() && !contractError() && stats()" class="dashboard-content">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.totalTeams }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.teams' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🖥️</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.totalSystems }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.systems' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌍</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.totalEnvironments }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.environments' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔗</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.uniqueEndpoints }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.uniqueEndpoints' | t }}</div>
+          <div class="stat-sub">{{ stats()!.totalEndpoints }} {{ 'dashboard.stat.acrossAllEnvs' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="stat-icon">✨</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.newEndpoints }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.new' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card accent-yellow">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.modifiedEndpoints }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.modified' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-icon">🗑️</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.deletedEndpoints }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.deleted' | t }}</div>
+        </div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stats()!.brokenSwaggerUrls }}</div>
+          <div class="stat-label">{{ 'dashboard.stat.brokenUrls' | t }}</div>
+        </div>
+      </div>
+    </div>
+    <!-- Endpoints By System / Environment / Swagger Source & Recent Syncs -->
+    <div class="sections-grid">
+
+      <!-- Endpoints Breakdown -->
+      <div class="section">
+        <h2 class="section-title">{{ 'dashboard.endpointsByEnvironment' | t }}</h2>
+        <p class="section-desc">{{ 'dashboard.endpointsByEnvironment.desc' | t }}</p>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'dashboard.col.system' | t }}</th>
+                <th>{{ 'dashboard.col.environment' | t }}</th>
+                <th>{{ 'dashboard.col.source' | t }}</th>
+                <th class="text-right">{{ 'dashboard.col.totalEndpoints' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let group of groupedBySystem()">
+                <!-- System row (clickable to expand) -->
+                <tr class="row-system" (click)="toggleSystem(group.systemId)">
+                  <td colspan="3">
+                    <span class="expand-icon">{{ isSystemExpanded(group.systemId) ? '▼' : '▶' }}</span>
+                    <strong>{{ group.systemName }}</strong>
+                    <code *ngIf="structuralOnly()">{{ group.systemId }}</code>
+                  </td>
+                  <td class="text-right">
+                    <span class="endpoint-count">{{ group.totalEndpoints }}</span>
+                    <span class="env-count-hint"> · {{ group.envCount }} {{ group.envCount !== 1 ? ('dashboard.envs' | t) : ('dashboard.env' | t) }}</span>
+                  </td>
+                </tr>
+
+                <!-- Environment rows -->
+                <ng-container *ngIf="isSystemExpanded(group.systemId)">
+                  <ng-container *ngFor="let env of group.environments">
+                    <!-- Environment row -->
+                    <tr class="row-env" [routerLink]="environmentRoute()" [queryParams]="{ env: env.environmentId }">
+                      <td></td>
+                      <td>
+                        <span class="env-badge">{{ env.environmentName }}</span>
+                      </td>
+                      <td class="text-subtle">
+                        <span *ngIf="env.swaggerSources.length === 0">—</span>
+                        <span *ngIf="env.swaggerSources.length > 0" class="source-count-hint">
+                          {{ env.swaggerSources.length }} {{ 'dashboard.sources' | t }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <span class="endpoint-count">{{ env.totalEndpoints }}</span>
+                      </td>
+                    </tr>
+
+                    <!-- Swagger source rows (only when env has multiple sources) -->
+                    <ng-container *ngIf="env.swaggerSources.length > 0">
+                      <tr *ngFor="let src of env.swaggerSources" class="row-source">
+                        <td></td>
+                        <td></td>
+                        <td>
+                          <span class="source-label">{{ src.label }}</span>
+                          <span *ngIf="src.url" class="source-url text-subtle" [title]="src.url">{{ src.url }}</span>
+                        </td>
+                        <td class="text-right text-subtle">{{ src.totalEndpoints }}</td>
+                      </tr>
+                    </ng-container>
+                  </ng-container>
+                </ng-container>
+              </ng-container>
+
+              <tr *ngIf="groupedBySystem().length === 0">
+                <td colspan="4" class="empty-state">
+                  {{ 'dashboard.noSyncs' | t }} <a *ngIf="canAddEnvironment()" [routerLink]="environmentRoute()">{{ 'environments.addEnv' | t }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Syncs -->
+      <div class="section">
+        <h2 class="section-title">{{ 'dashboard.recentSyncs' | t }}</h2>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'dashboard.col.system' | t }}</th>
+                <th>{{ 'dashboard.col.environment' | t }}</th>
+                <th>{{ 'dashboard.col.status' | t }}</th>
+                <th>{{ 'dashboard.col.syncedAt' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let sync of recentSyncs(); let i = index">
+                <!-- Main sync row -->
+                <tr [class.row-clickable]="sync.status === 'Failed' && sync.errorMessage"
+                    (click)="sync.status === 'Failed' && sync.errorMessage ? toggleSync(i) : null">
+                  <td>
+                    <span>{{ sync.systemName }}</span>
+                    <span *ngIf="sync.swaggerSourceLabel" class="source-tag">{{ sync.swaggerSourceLabel }}</span>
+                  </td>
+                  <td>{{ sync.environmentName }}</td>
+                  <td>
+                    <div class="status-cell">
+                      <span class="status-badge" [class]="'status-' + sync.status.toLowerCase()">
+                        {{ sync.status }}
+                      </span>
+                      <span *ngIf="sync.status === 'Failed' && sync.errorMessage" class="error-toggle"
+                            [title]="isSyncExpanded(i) ? ('dashboard.hideError' | t) : ('dashboard.showError' | t)">
+                        {{ isSyncExpanded(i) ? '▲' : '▼' }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="text-muted">{{ sync.syncedAt | date:'short' }}</td>
+                </tr>
+
+                <!-- Error detail row (expandable) -->
+                <tr *ngIf="sync.status === 'Failed' && sync.errorMessage && isSyncExpanded(i)" class="row-error">
+                  <td colspan="4">
+                    <div class="error-details">
+                      <span class="error-label">{{ 'dashboard.errorReason' | t }}:</span>
+                      <span class="error-message">{{ sync.errorMessage }}</span>
+                      <div *ngIf="sync.swaggerSourceUrl" class="error-url">
+                        <span class="error-label">{{ 'dashboard.swaggerUrl' | t }}:</span>
+                        <a [href]="sync.swaggerSourceUrl" target="_blank" rel="noopener noreferrer" class="error-link">
+                          {{ sync.swaggerSourceUrl }}
+                        </a>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+
+              <tr *ngIf="!stats()!.recentSyncs.length">
+                <td colspan="4" class="empty-state">
+                  {{ 'dashboard.noSyncs' | t }} <a *ngIf="canAddEnvironment()" [routerLink]="environmentRoute()">{{ 'environments.addEnv' | t }}</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</ng-template>

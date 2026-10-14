@@ -1,0 +1,280 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ 'authProfiles.title' | t }}</h1>
+      <p class="page-subtitle">{{ 'authProfiles.subtitle' | t }}</p>
+    </div>
+    <button *ngIf="auth.hasPermission('authprofiles.manage')" class="btn-primary" (click)="openForm()">{{
+      'authProfiles.newBtn' | t }}</button>
+  </div>
+
+  <div class="filter-bar">
+    <p-dropdown
+      [(ngModel)]="selectedSystemId"
+      (ngModelChange)="onSysFilter($event)"
+      [options]="systems()"
+      optionLabel="name"
+      optionValue="id"
+      [filter]="true"
+      filterPlaceHolder="Search systems…"
+      [showClear]="true"
+      [placeholder]="'common.allSystems' | t">
+    </p-dropdown>
+  </div>
+
+  <!-- Form Modal -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">{{ editingId ? ('authProfiles.modal.edit' | t) : ('authProfiles.modal.new' | t) }}</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-group">
+          <label>{{ 'authProfiles.form.system' | t }}</label>
+          <p-dropdown
+            formControlName="systemId"
+            [options]="systems()"
+            optionLabel="name"
+            optionValue="id"
+            [filter]="true"
+            filterPlaceHolder="Search systems…"
+            [showClear]="true"
+            [placeholder]="'authProfiles.form.global' | t">
+          </p-dropdown>
+        </div>
+        <div class="form-group">
+          <label>{{ 'authProfiles.form.name' | t }}</label>
+          <input type="text" formControlName="name" placeholder="e.g. Production Bearer">
+        </div>
+        <div class="form-group">
+          <label>{{ 'authProfiles.form.type' | t }}</label>
+          <p-dropdown
+            formControlName="type"
+            [options]="authTypes"
+            [placeholder]="'authProfiles.form.type' | t">
+          </p-dropdown>
+        </div>
+        <!-- Bearer Token -->
+        <ng-container *ngIf="form.get('type')?.value === 'BearerToken'">
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.bearerToken' | t }}</label>
+            <input type="password" formControlName="token" placeholder="eyJhbGci...">
+          </div>
+        </ng-container>
+        <!-- API Key -->
+        <ng-container *ngIf="form.get('type')?.value === 'ApiKey'">
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.apiKeyHeader' | t }}</label>
+            <input type="text" formControlName="apiKeyHeaderName" placeholder="X-API-Key">
+          </div>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.apiKeyValue' | t }}</label>
+            <input type="password" formControlName="token">
+          </div>
+        </ng-container>
+        <!-- Basic Auth -->
+        <ng-container *ngIf="form.get('type')?.value === 'BasicAuth'">
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.username' | t }}</label>
+            <input type="text" formControlName="username">
+          </div>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.password' | t }}</label>
+            <input type="password" formControlName="password">
+          </div>
+        </ng-container>
+        <!-- Custom Header -->
+        <ng-container *ngIf="form.get('type')?.value === 'CustomHeader'">
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.headerName' | t }}</label>
+            <input type="text" formControlName="customHeaderName" placeholder="X-Custom-Header">
+          </div>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.headerValue' | t }}</label>
+            <input type="password" formControlName="customHeaderValue">
+          </div>
+        </ng-container>
+        <!-- Auto Login Token -->
+        <ng-container *ngIf="form.get('type')?.value === 'AutoLoginToken'">
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.loginUrl' | t }}</label>
+            <input type="text" formControlName="loginUrl" placeholder="https://api.example.com/auth/login">
+          </div>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.loginMethod' | t }}</label>
+            <p-dropdown
+              formControlName="loginMethod"
+              [options]="['POST','GET']">
+            </p-dropdown>
+          </div>
+          <!-- POST: JSON body -->
+          <ng-container *ngIf="!isGetLogin">
+            <div class="form-group">
+              <label>{{ 'authProfiles.form.loginBody' | t }}</label>
+              <textarea formControlName="loginRequestBodyTemplate" rows="3"
+                placeholder='{"username":"admin","password":"secret"}'></textarea>
+            </div>
+          </ng-container>
+          <!-- GET: query params key-value builder -->
+          <ng-container *ngIf="isGetLogin">
+            <div class="form-group">
+              <label>Login Query Params</label>
+              <small style="color:var(--text-subtle);display:block;margin-bottom:8px">Parameters sent as query string in
+                the GET login request (e.g. ?username=admin&password=secret).</small>
+              <div formArrayName="loginQueryParams">
+                <div *ngFor="let row of loginQueryParamsArray.controls; let i = index" [formGroupName]="i"
+                  class="header-row">
+                  <input formControlName="key" placeholder="Param name" class="header-key-input">
+                  <input formControlName="value" placeholder="Value" class="header-val-input">
+                  <button type="button" class="btn-remove-header" (click)="removeLoginQueryParam(i)">✕</button>
+                </div>
+              </div>
+              <button type="button" class="btn-add-header" (click)="addLoginQueryParam()">+ Add Param</button>
+            </div>
+          </ng-container>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.tokenPath' | t }}</label>
+            <input type="text" formControlName="tokenJsonPath" placeholder="e.g. data.accessToken">
+            <small style="color:var(--text-subtle)">Dot-notation path to extract the token from the JSON response (e.g.
+              <code>data.accessToken</code>). Leave empty if the login response is a raw string token.</small>
+          </div>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.tokenPrefix' | t }}</label>
+            <input type="text" formControlName="tokenPrefix" placeholder="Bearer">
+          </div>
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.tokenExpiry' | t }}</label>
+            <input type="number" formControlName="tokenExpirySeconds" placeholder="3600">
+          </div>
+          <!-- Pre-Auth Profile -->
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.preAuthProfile' | t }}</label>
+            <small style="color:var(--text-subtle);display:block;margin-bottom:8px">{{ 'authProfiles.form.preAuthProfileHint' | t }}</small>
+            <p-dropdown
+              formControlName="preAuthProfileId"
+              [options]="profiles()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              filterPlaceholder="Search profiles…"
+              [showClear]="true"
+              [placeholder]="'authProfiles.form.preAuthProfileNone' | t">
+            </p-dropdown>
+          </div>
+          <!-- Extra Custom Headers -->
+          <div class="form-group">
+            <label>{{ 'authProfiles.form.extraHeaders' | t }}</label>
+            <small style="color:var(--text-subtle);display:block;margin-bottom:8px">Additional headers injected into
+              every request alongside the Authorization header (e.g. X-Tenant-Id, X-App-Version).</small>
+            <div formArrayName="extraHeaders">
+              <div *ngFor="let row of extraHeadersArray.controls; let i = index" [formGroupName]="i" class="header-row">
+                <input formControlName="key" placeholder="Header name" class="header-key-input">
+                <input formControlName="value" placeholder="Value" class="header-val-input">
+                <button type="button" class="btn-remove-header" (click)="removeExtraHeader(i)">✕</button>
+              </div>
+            </div>
+            <button type="button" class="btn-add-header" (click)="addExtraHeader()">{{ 'authProfiles.form.addHeader' | t
+              }}</button>
+          </div>
+        </ng-container>
+        <div class="form-group">
+          <label>{{ 'authProfiles.form.description' | t }}</label>
+          <textarea formControlName="description" rows="2"></textarea>
+        </div>
+        <div class="form-group checkbox-group">
+          <label><input type="checkbox" formControlName="isDefault"> {{ 'authProfiles.form.isDefault' | t }}</label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="closeForm()">{{ 'common.cancel' | t }}</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">{{ saving() ? ('common.saving'
+            | t) : ('common.save' | t) }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <app-loading [loading]="loading()"></app-loading>
+
+  <div *ngIf="!loading()" class="profiles-grid">
+    <div *ngFor="let p of profiles()" class="profile-card">
+      <div class="profile-header">
+        <div class="profile-name">{{ p.name }}</div>
+        <div class="profile-type-badge">{{ p.type }}</div>
+      </div>
+      <div class="profile-meta" *ngIf="p.systemId">{{ 'authProfiles.system' | t }} {{ getSystemName(p.systemId) }}</div>
+      <div class="profile-meta pre-auth-meta" *ngIf="p.preAuthProfileName">
+        <span class="pre-auth-badge">pre-auth</span> {{ p.preAuthProfileName }}
+      </div>
+      <div class="profile-desc">{{ p.description }}</div>
+      <div class="default-badge" *ngIf="p.isDefault">{{ 'authProfiles.default' | t }}</div>
+      <div class="profile-actions">
+        <button class="btn-sm btn-test" (click)="testAuth(p)" [disabled]="testingId() === p.id">
+          {{ testingId() === p.id ? 'Testing…' : 'Test Auth' }}
+        </button>
+        <button *ngIf="auth.hasPermission('authprofiles.manage')" class="btn-sm btn-secondary" (click)="openForm(p)">{{
+          'common.edit' | t }}</button>
+        <button *ngIf="auth.hasPermission('authprofiles.manage')" class="btn-sm btn-danger" (click)="delete(p.id)">{{
+          'common.delete' | t }}</button>
+      </div>
+    </div>
+    <div *ngIf="!profiles().length" class="empty-state">{{ 'authProfiles.noProfiles' | t }}</div>
+  </div>
+
+  <!-- Test Auth Result Modal -->
+  <div class="modal-overlay" *ngIf="showTestModal()" (click)="closeTestModal()">
+    <div class="modal test-modal" (click)="$event.stopPropagation()">
+      <div class="test-modal-header">
+        <h2 class="modal-title">Test Auth — {{ testingProfileName() }}</h2>
+        <button class="btn-close" (click)="closeTestModal()">✕</button>
+      </div>
+
+      <!-- Loading state -->
+      <div *ngIf="!testResult() && testingId()" class="test-loading">
+        <span class="spinner"></span> Running authentication test…
+      </div>
+
+      <!-- Result -->
+      <ng-container *ngIf="testResult() as result">
+        <div class="test-status" [class.test-status--success]="result.isSuccess" [class.test-status--fail]="!result.isSuccess">
+          <span class="status-dot"></span>
+          {{ result.isSuccess ? 'Authentication successful' : 'Authentication failed' }}
+        </div>
+
+        <!-- Error message -->
+        <div *ngIf="result.error" class="test-error">{{ result.error }}</div>
+
+        <!-- Generated headers -->
+        <!-- <div *ngIf="testHeaderEntries.length" class="test-section">
+          <div class="test-section-title">Generated Headers</div>
+          <div *ngFor="let h of testHeaderEntries" class="test-header-row">
+            <span class="header-name">{{ h.key }}</span>
+            <span class="header-value">{{ h.value }}</span>
+          </div>
+        </div> -->
+
+        <!-- Extracted token + copy button -->
+        <div *ngIf="result.extractedToken" class="test-section">
+          <div class="test-section-title">Extracted Token</div>
+          <div class="token-box">
+            <pre class="token-value">{{ result.extractedToken }}</pre>
+            <button class="btn-copy" (click)="copyToken()">
+              {{ copiedToken() ? '✓ Copied' : 'Copy Token' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Login response (AutoLoginToken) -->
+        <div *ngIf="result.loginResponseBody !== undefined && result.loginResponseBody !== null" class="test-section">
+          <div class="test-section-title">
+            Login Response
+            <span *ngIf="result.loginStatusCode" class="login-status-code"
+              [class.status-ok]="result.loginStatusCode >= 200 && result.loginStatusCode < 300"
+              [class.status-err]="result.loginStatusCode >= 400">
+              {{ result.loginStatusCode }}
+            </span>
+            <span *ngIf="result.loginResponseTimeMs" class="login-time">{{ result.loginResponseTimeMs }}ms</span>
+          </div>
+          <app-json-viewer [content]="result.loginResponseBody"></app-json-viewer>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

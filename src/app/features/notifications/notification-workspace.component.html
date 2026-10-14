@@ -1,0 +1,148 @@
+<section class="notification-workspace page" aria-labelledby="action-center-title">
+  <header class="action-header">
+    <div class="action-heading">
+      <div class="breadcrumb"><span>{{ 'notifications.workspace' | t }}</span><i class="pi pi-angle-right" aria-hidden="true"></i><span>{{ 'notifications.title' | t }}</span></div>
+      <h1 id="action-center-title">{{ 'notifications.title' | t }}</h1>
+      <p>{{ 'notifications.subtitle' | t }}</p>
+    </div>
+    <button class="mark-all-button" type="button" (click)="markAllRead()"
+      [disabled]="!canMutate() || unreadCount() === 0"
+      [attr.title]="!canMutate() ? ('notifications.readOnlyTitle' | t) : null">
+      <i class="pi pi-check" aria-hidden="true"></i><span>{{ 'notifications.markAllRead' | t }}</span>
+    </button>
+  </header>
+
+  <div class="action-layout">
+    <section class="notification-browser" [attr.aria-label]="'notifications.list' | t">
+      <div class="list-tools">
+        <div class="filter-tabs" role="tablist" [attr.aria-label]="'notifications.filter' | t">
+          <button type="button" role="tab" [attr.aria-selected]="filter().kind === 'all'"
+            [class.active]="filter().kind === 'all'" (click)="setFilter({kind: 'all'})">
+            {{ 'notifications.all' | t }} <span>{{ notifications().length }}</span>
+          </button>
+          <button type="button" role="tab" [attr.aria-selected]="filter().kind === 'unread'"
+            [class.active]="filter().kind === 'unread'" (click)="setFilter({kind: 'unread'})">
+            {{ 'notifications.unread' | t }} <span>{{ unreadCount() }}</span>
+          </button>
+          <button *ngFor="let type of types()" type="button" role="tab"
+            [attr.aria-selected]="isTypeFilter(type)"
+            [class.active]="isTypeFilter(type)"
+            (click)="setFilter({kind: 'type', value: type})">
+            {{ typeLabel(type) }}
+            <span>{{ typeCount(type) }}</span>
+          </button>
+        </div>
+        <label class="notification-search">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input type="search" [value]="search()" (input)="search.set($any($event.target).value)"
+            [placeholder]="'notifications.search' | t" [attr.aria-label]="'notifications.search' | t">
+        </label>
+      </div>
+
+      <p class="live-status" *ngIf="realtimeError()" role="status">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        {{ 'notifications.realtimeUnavailable' | t }}
+      </p>
+      <p class="request-error" *ngIf="errorKey()" role="alert">{{ errorKey()! | t }}</p>
+
+      <div class="notification-list" *ngIf="!errorKey()">
+        <div class="notification-skeleton" *ngIf="loading()" [attr.aria-label]="'notifications.loading' | t">
+          <span *ngFor="let item of [1, 2, 3]"></span>
+        </div>
+        <ng-container *ngIf="!loading()">
+          <article *ngFor="let notification of filteredNotifications(); trackBy: trackById"
+            class="notification-row" [class.unread]="!notification.isRead"
+            [class.selected]="isSelected(notification)">
+            <button class="notification-select" type="button" (click)="select(notification)"
+              [attr.aria-pressed]="isSelected(notification)">
+              <span class="type-mark" [class.unread]="!notification.isRead" aria-hidden="true">
+                <i [class]="notification.type === 'share' ? 'pi pi-share-alt' : 'pi pi-bell'"></i>
+              </span>
+              <span class="notification-copy">
+                <span class="notification-message">{{ notification.message }}</span>
+                <span class="notification-meta">
+                  <span class="type-label">{{ typeLabel(notification.type) }}</span>
+                  <span class="meta-divider" aria-hidden="true"></span>
+                  <time [attr.datetime]="notification.createdAt">{{ notification.createdAt | date:'medium' }}</time>
+                  <span class="unread-label" *ngIf="!notification.isRead">{{ 'notifications.unread' | t }}</span>
+                </span>
+              </span>
+              <span class="unread-dot" *ngIf="!notification.isRead" aria-label="Unread"></span>
+            </button>
+            <button *ngIf="notification.type === 'share'" class="open-link" type="button"
+              (click)="select(notification); openSelected()" [attr.aria-label]="'notifications.openShared' | t">
+              {{ 'notifications.open' | t }}
+            </button>
+          </article>
+          <div class="list-empty" *ngIf="filteredNotifications().length === 0 && notifications().length === 0">
+            <span class="empty-icon"><i class="pi pi-bell" aria-hidden="true"></i></span>
+            <h2>{{ 'notifications.emptyTitle' | t }}</h2>
+            <p>{{ 'notifications.emptyText' | t }}</p>
+          </div>
+          <div class="list-empty" *ngIf="filteredNotifications().length === 0 && notifications().length > 0">
+            <span class="empty-icon"><i class="pi pi-search" aria-hidden="true"></i></span>
+            <h2>{{ 'notifications.noMatches' | t }}</h2>
+            <p>{{ 'notifications.adjustFilters' | t }}</p>
+            <button type="button" (click)="search.set(''); setFilter({kind: 'all'})">{{ 'notifications.clearFilters' | t }}</button>
+          </div>
+        </ng-container>
+      </div>
+      <footer class="list-footer" *ngIf="notifications().length > 0">
+        {{ 'notifications.showing' | t }} {{ filteredNotifications().length }} {{ 'notifications.of' | t }}
+        {{ notifications().length }} {{ 'notifications.recent' | t }}
+      </footer>
+    </section>
+
+    <aside class="notification-context" [attr.aria-label]="'notifications.selectedDetails' | t">
+      <div class="context-heading">
+        <div>
+          <span class="eyebrow">{{ 'notifications.context' | t }}</span>
+          <h2>{{ 'notifications.details' | t }}</h2>
+        </div>
+        <span class="context-icon"><i class="pi pi-inbox" aria-hidden="true"></i></span>
+      </div>
+      <ng-container *ngIf="selected() as notification; else noSelection">
+        <div class="detail-state" [class.unread]="!notification.isRead">
+          <span class="detail-state-dot" aria-hidden="true"></span>
+          {{ notification.isRead ? ('notifications.read' | t) : ('notifications.unread' | t) }}
+        </div>
+        <div class="detail-message">
+          <span class="eyebrow">{{ 'notifications.message' | t }}</span>
+          <p>{{ notification.message }}</p>
+        </div>
+        <dl class="detail-fields">
+          <div>
+            <dt>{{ 'notifications.type' | t }}</dt><dd>{{ typeLabel(notification.type) }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'notifications.received' | t }}</dt><dd><time [attr.datetime]="notification.createdAt">{{ notification.createdAt | date:'medium' }}</time></dd>
+          </div>
+          <div *ngIf="notification.relatedEntityId">
+            <dt>{{ 'notifications.relatedRecord' | t }}</dt><dd><code>{{ notification.relatedEntityId }}</code></dd>
+          </div>
+        </dl>
+        <div class="context-actions">
+          <button *ngIf="notification.type === 'share'" type="button" class="primary-action" (click)="openSelected()">
+            <i class="pi pi-external-link" aria-hidden="true"></i>{{ 'notifications.openShared' | t }}
+          </button>
+          <button *ngIf="!notification.isRead && canMutate()" type="button" class="secondary-action" (click)="markSelectedRead()">
+            <i class="pi pi-check" aria-hidden="true"></i>{{ 'notifications.markRead' | t }}
+          </button>
+          <p *ngIf="!canMutate()" class="permission-note">
+            <i class="pi pi-lock" aria-hidden="true"></i>{{ 'notifications.permissionReadOnly' | t }}
+          </p>
+        </div>
+      </ng-container>
+      <ng-template #noSelection>
+        <div class="context-empty">
+          <i class="pi pi-inbox" aria-hidden="true"></i>
+          <p>{{ 'notifications.selectPrompt' | t }}</p>
+        </div>
+      </ng-template>
+      <div class="context-note">
+        <i class="pi pi-shield" aria-hidden="true"></i>
+        <p>{{ 'notifications.accessNote' | t }}</p>
+      </div>
+    </aside>
+  </div>
+</section>
