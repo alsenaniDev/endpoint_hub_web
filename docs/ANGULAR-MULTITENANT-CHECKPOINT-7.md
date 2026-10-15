@@ -8,7 +8,7 @@ minimal **read-only** backend contract. Backend authorization remains authoritat
 No SQL Server connection was opened, no backend host was started, and no database
 mutation/migration/permission grant was performed in this checkpoint. Frontend
 HTTP tests use HttpTestingController; backend tests are isolated tests. Nothing
-connected to or modified the original TWKEndpointsHub database.
+connected to or modified the original the legacy database database.
 
 Organization creation/editing, membership changes and the invitation lifecycle
 remain explicitly unavailable. Their absence is not disguised as an empty

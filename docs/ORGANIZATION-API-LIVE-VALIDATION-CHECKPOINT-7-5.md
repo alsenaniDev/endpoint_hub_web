@@ -11,8 +11,8 @@ authoritative post-Checkpoint-6 fingerprints and freshly verified read-only:
 **217 rows, with no unexpected changes**. Checkpoint 7.5 is passed within this
 defined scope. See section 11 for the contract fix and 209/217 reconciliation.
 
-Only `DESKTOP-NT1M6V7 / TWKEndpointsHub_MigrationTest` was connected to.
-The original `TWKEndpointsHub` database was not connected to or modified.
+Only `DESKTOP-NT1M6V7 / EndpointsHub` was connected to.
+The original legacy database was not connected to or modified.
 
 ## 1. Actual HTTP results
 
@@ -291,7 +291,7 @@ the grant timestamp and catalog comparison are retained in:
 
 Only MigrationTest was accessed, read-only, during this reconciliation.
 No API host, migrations, grant changes, invitations, HangFire or SignalR were
-started. Original TWKEndpointsHub remains untouched.
+started. The original legacy database remains untouched.
 
 **STOP: all six requested completion conditions are satisfied. Checkpoint 7.5
 passes only within this approved scope; deferred work and the unresolved

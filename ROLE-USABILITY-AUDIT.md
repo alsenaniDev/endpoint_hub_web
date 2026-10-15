@@ -182,7 +182,7 @@ Runner: Angular CLI `test --watch=false --browsers=ChromeHeadless` with a focuse
 
 ## Preservation and cleanup
 
-Final SELECT-only verification succeeded against `DESKTOP-NT1M6V7 / TWKEndpointsHub_MigrationTest`:
+Final SELECT-only verification succeeded against `DESKTOP-NT1M6V7 / EndpointsHub`:
 
 | Measure | Before | After |
 |---|---:|---:|

@@ -143,7 +143,7 @@ Final certificate captured **2026-10-03T18:56:15.2633767Z**:
 | Captured tables / application rows | 41 / 231 | **41 / 231** |
 | Persistent application/catalog delta | 0 | **0** |
 
-Target: `DESKTOP-NT1M6V7 / TWKEndpointsHub_MigrationTest`.
+Target: `DESKTOP-NT1M6V7 / EndpointsHub`.
 
 All 48 composite mapping identities and captured catalog/application fingerprints match certification. This preserves all original 37 mappings plus the approved 11, Owner grants, the absence of all 15 conditional mappings and the existing excluded organization-role capabilities.
 

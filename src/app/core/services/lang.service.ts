@@ -5,7 +5,6 @@ export type Lang = 'en' | 'ar';
 @Injectable({ providedIn: 'root' })
 export class LangService {
     private readonly STORAGE_KEY = 'endpoints-hub-lang';
-    private readonly LEGACY_STORAGE_KEY = 'twk-lang';
 
     lang = signal<Lang>(this.loadLang());
 
@@ -26,10 +25,6 @@ export class LangService {
         const saved = localStorage.getItem(this.STORAGE_KEY);
 
         if (saved === 'en' || saved === 'ar') return saved;
-
-        const legacy = localStorage.getItem(this.LEGACY_STORAGE_KEY);
-
-        if (legacy === 'en' || legacy === 'ar') return legacy;
 
         return 'en';
     }

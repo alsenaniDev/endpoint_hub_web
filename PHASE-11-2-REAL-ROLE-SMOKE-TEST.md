@@ -4,7 +4,7 @@
 
 **Completed, with the observed defects corrected and retested.** Native Angular login, live SQL-backed organization bootstrap, authorized navigation/actions, denied routes/actions, explicit backend error handling, organization switching and logout were exercised. No permissions, RolePermissions, Owner grants, lifecycle definitions, schema or migration history were changed.
 
-The only database used was `DESKTOP-NT1M6V7 / TWKEndpointsHub_MigrationTest`. The original `TWKEndpointsHub` database was not connected to. Final independent preservation verification completed at **2026-10-03T23:38:15Z**.
+The only database used was `DESKTOP-NT1M6V7 / EndpointsHub`. The original `the legacy database` database was not connected to. Final independent preservation verification completed at **2026-10-03T23:38:15Z**.
 
 This is a browser smoke matrix, not an automated end-to-end runner claiming one test for every DOM assertion. Native browser/HTTP evidence is distinguished below from Angular/backend regression evidence. No API response mocks or fabricated authentication were used for the successful journeys.
 
@@ -225,7 +225,7 @@ The first run certified restoration at 22:57:38Z. The second run completed norma
 - Pending migrations: none. Pending EF model changes: false.
 - Persistent application/catalog delta: **zero**.
 - Database-wide `@@DBTS` necessarily advanced during temporary writes. It was not reseeded; this internal counter advance is explicitly outside the zero application/catalog delta claim.
-- Original `TWKEndpointsHub` connected: **false**.
+- Original `the legacy database` connected: **false**.
 - No host remained listening on the owned validation ports after shutdown.
 
 ### Retained evidence
