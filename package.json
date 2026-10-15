@@ -1,5 +1,5 @@
 {
-  "name": "twk_endpoint_hub_web",
+  "name": "endpoint_hub_web",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",

@@ -85,8 +85,8 @@ describe('WorkbenchShellComponent localization', () => {
     organizationReady = signal(true);
     organizationLoading = signal(false);
     organizationError = signal<string | null>(null);
-    localStorage.removeItem('twk-lang');
-    localStorage.removeItem('twk-theme');
+    localStorage.removeItem('endpoints-hub-lang');
+    localStorage.removeItem('endpoints-hub-theme');
     await TestBed.configureTestingModule({
       imports: [WorkbenchShellComponent],
       providers: [
@@ -160,8 +160,8 @@ describe('WorkbenchShellComponent localization', () => {
 
   afterEach(() => {
     fixture.destroy();
-    localStorage.removeItem('twk-lang');
-    localStorage.removeItem('twk-theme');
+    localStorage.removeItem('endpoints-hub-lang');
+    localStorage.removeItem('endpoints-hub-theme');
     document.documentElement.dir = originalDir;
     document.documentElement.lang = originalLang;
   });
@@ -191,27 +191,27 @@ describe('WorkbenchShellComponent localization', () => {
     fixture.detectChanges();
     expect(theme.theme()).toBe('dark');
     expect(document.body.classList.contains('dark-mode')).toBeTrue();
-    expect(localStorage.getItem('twk-theme')).toBe('dark');
+    expect(localStorage.getItem('endpoints-hub-theme')).toBe('dark');
 
     (element.querySelector('.shell-preference-button[aria-label="Switch to Light mode"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(theme.theme()).toBe('light');
     expect(document.body.classList.contains('dark-mode')).toBeFalse();
-    expect(localStorage.getItem('twk-theme')).toBe('light');
+    expect(localStorage.getItem('endpoints-hub-theme')).toBe('light');
 
     languageButton.click();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(lang.lang()).toBe('ar');
     expect(document.documentElement.dir).toBe('rtl');
-    expect(localStorage.getItem('twk-lang')).toBe('ar');
+    expect(localStorage.getItem('endpoints-hub-lang')).toBe('ar');
 
     (element.querySelector('.shell-preference-button[aria-label="التبديل إلى الإنجليزية"]') as HTMLButtonElement).click();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(lang.lang()).toBe('en');
     expect(document.documentElement.dir).toBe('ltr');
-    expect(localStorage.getItem('twk-lang')).toBe('en');
+    expect(localStorage.getItem('endpoints-hub-lang')).toBe('en');
   });
 
   it('renders translated Arabic navigation and shared chrome in RTL, including the mobile drawer', async () => {

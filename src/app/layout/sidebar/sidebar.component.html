@@ -13,8 +13,8 @@
       <img src="/assets/images/logo.svg" alt="" srcset="">
     </div>
     <div class="brand-text" *ngIf="!collapsed">
-      <div class="brand-name">TWK Hub</div>
-      <div class="brand-sub">Endpoints Hub</div>
+      <div class="brand-name">Endpoints</div>
+      <div class="brand-sub">Hub</div>
     </div>
     <!-- Close button — mobile only, on the end side away from the logo -->
     <button class="mobile-close-btn" (click)="closeSidebar.emit()" aria-label="Close menu">
@@ -45,16 +45,14 @@
   <!-- Nav -->
   <nav class="sidebar-nav">
     <ng-container *ngFor="let item of navItems">
-      <a *ngIf="visible(item) && !item.isExternal"
-        [routerLink]="item.route" routerLinkActive="active" class="nav-item" (click)="closeSidebar.emit()"
-        [title]="collapsed ? (item.labelKey | t) : ''">
+      <a *ngIf="visible(item) && !item.isExternal" [routerLink]="item.route" routerLinkActive="active" class="nav-item"
+        (click)="closeSidebar.emit()" [title]="collapsed ? (item.labelKey | t) : ''">
         <span class="nav-icon" [innerHTML]="item.icon"></span>
         <span class="nav-label" *ngIf="!collapsed">{{ item.labelKey | t }}</span>
         <span class="nav-tag" *ngIf="!collapsed && item.isBeta" [class.rtl]="isRTL()">{{ 'Beta' | t }}</span>
       </a>
-      <a *ngIf="visible(item) && item.isExternal" [href]="item.route"
-        target="_blank" routerLinkActive="active" class="nav-item" (click)="closeSidebar.emit()"
-        [title]="collapsed ? (item.labelKey | t) : ''">
+      <a *ngIf="visible(item) && item.isExternal" [href]="item.route" target="_blank" routerLinkActive="active"
+        class="nav-item" (click)="closeSidebar.emit()" [title]="collapsed ? (item.labelKey | t) : ''">
         <span class="nav-icon" [innerHTML]="item.icon"></span>
         <span class="nav-label" *ngIf="!collapsed">{{ item.labelKey | t }}</span>
         <span class="nav-tag" *ngIf="!collapsed && item.isBeta" [class.rtl]="isRTL()">{{ 'Beta' | t }}</span>
@@ -69,7 +67,8 @@
       <ng-container *ngIf="!collapsed">
         <div class="user-details">
           <div class="user-name">{{ auth.currentUser()?.username }}</div>
-          <div class="user-role">{{ organization.ready() && organization.structuralOnly() ? ('org.structuralOnly' | t) : (organization.membership()?.role?.name || ('org.noMembership' | t)) }}</div>
+          <div class="user-role">{{ organization.ready() && organization.structuralOnly() ? ('org.structuralOnly' | t) :
+            (organization.membership()?.role?.name || ('org.noMembership' | t)) }}</div>
         </div>
         <span class="user-arrow">{{ profileArrow() }}</span>
       </ng-container>

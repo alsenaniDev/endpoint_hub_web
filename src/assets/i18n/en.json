@@ -402,7 +402,7 @@
   "auth.loginBtn": "Sign In",
   "auth.logout": "Log Out",
   "auth.welcomeBack": "Welcome back",
-  "login.title": "TWK Endpoints Hub",
+  "login.title": "Endpoints Hub",
   "login.subtitle": "Internal API Explorer",
   "login.tabLogin": "Login",
   "login.tabRegister": "Register",
