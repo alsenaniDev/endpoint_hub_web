@@ -91,9 +91,9 @@ The audit found no organization controllers/handlers in the existing backend.
 The user approved adding only discovery/current context plus authorized
 read-only members/roles.
 
-[OrganizationsController](../../twk_endpoint_hub_api/src/Api/Controllers/OrganizationsController.cs)
+[OrganizationsController](../../endpoint_hub_api/src/Api/Controllers/OrganizationsController.cs)
 and
-[OrganizationReadService](../../twk_endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs)
+[OrganizationReadService](../../endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs)
 provide:
 
 | Endpoint | Boundary and output |
@@ -240,10 +240,10 @@ Frontend:
 
 Backend:
 
-- [Readonly organization reader/DTOs](../../twk_endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs)
-- [Discovery metadata](../../twk_endpoint_hub_api/src/Api/Authorization/OrganizationDiscoveryAttribute.cs)
-- [Organization controller](../../twk_endpoint_hub_api/src/Api/Controllers/OrganizationsController.cs)
-- [Organization reader tests](../../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/OrganizationReadTests.cs)
+- [Readonly organization reader/DTOs](../../endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs)
+- [Discovery metadata](../../endpoint_hub_api/src/Api/Authorization/OrganizationDiscoveryAttribute.cs)
+- [Organization controller](../../endpoint_hub_api/src/Api/Controllers/OrganizationsController.cs)
+- [Organization reader tests](../../endpoint_hub_api/tests/TenantAuthorization.Tests/OrganizationReadTests.cs)
 
 ## 9. Files modified
 
@@ -279,8 +279,8 @@ Tooling/localization/docs:
 
 Backend:
 
-- [Application DI](../../twk_endpoint_hub_api/src/Application/DependencyInjection.cs)
-- [Organization middleware](../../twk_endpoint_hub_api/src/Api/Middlewares/ActiveOrganizationMiddleware.cs)
+- [Application DI](../../endpoint_hub_api/src/Application/DependencyInjection.cs)
+- [Organization middleware](../../endpoint_hub_api/src/Api/Middlewares/ActiveOrganizationMiddleware.cs)
 
 ApiService itself is stateless and unchanged: its existing calls inherit context
 through the interceptor. No feature-by-feature organization header additions

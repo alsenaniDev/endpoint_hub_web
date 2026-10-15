@@ -14,8 +14,8 @@ This makes the approved **known-ID management** and **structural oversight** jou
 
 ## Membership and DTO contract
 
-- [Membership state](../twk_endpoint_hub_api/src/Application/Features/Organizations/MembershipState.cs) is typed and strictly validated. The JSON contract retains `"state": "Active"` for valid memberships, including protected Viewer responses. Arbitrary enum/string values are not accepted.
-- [OrganizationReadService](../twk_endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs) returns required boolean `membership.isReadOnly`, derived from persisted membership using the existing backend Viewer semantics.
+- [Membership state](../endpoint_hub_api/src/Application/Features/Organizations/MembershipState.cs) is typed and strictly validated. The JSON contract retains `"state": "Active"` for valid memberships, including protected Viewer responses. Arbitrary enum/string values are not accepted.
+- [OrganizationReadService](../endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs) returns required boolean `membership.isReadOnly`, derived from persisted membership using the existing backend Viewer semantics.
 - Organization member state is also typed. Arbitrary organization/role/member descriptions and names remain subject to Viewer redaction; no generic string whitelist was introduced.
 - Dashboard environment rows now include a tenant-scoped GUID `systemId`, populated from the existing relationship. No EF entity or schema change was needed.
 - Angular validates Active state, boolean read-only metadata and the capability-list shape before accepting context. Missing or invalid metadata fails closed with an explicit context error.
@@ -107,8 +107,8 @@ Commands executed:
 ```powershell
 node .\node_modules\@angular\cli\bin\ng.js test --watch=false --browsers=ChromeHeadless
 node .\node_modules\@angular\cli\bin\ng.js build --configuration=production
-dotnet test ..\twk_endpoint_hub_api\tests\TenantAuthorization.Tests\TenantAuthorization.Tests.csproj --no-restore --verbosity minimal
-dotnet build ..\twk_endpoint_hub_api\src\Api\Api.csproj --no-restore --verbosity minimal
+dotnet test ..\endpoint_hub_api\tests\TenantAuthorization.Tests\TenantAuthorization.Tests.csproj --no-restore --verbosity minimal
+dotnet build ..\endpoint_hub_api\src\Api\Api.csproj --no-restore --verbosity minimal
 ```
 
 Angular tests ran in actual ChromeHeadless 154 with mocked application HTTP. Backend DTO/controller tests use isolated in-memory/test-host evidence. These are **not newly executed live SQL-backed role login sessions**.
@@ -232,12 +232,12 @@ Paths below are relative to this frontend workspace, except explicitly linked ba
 
 ### Backend source and tests
 
-- [OrganizationReadService.cs](../twk_endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs)
-- [MembershipState.cs](../twk_endpoint_hub_api/src/Application/Features/Organizations/MembershipState.cs)
-- [DashboardStatsDto.cs](../twk_endpoint_hub_api/src/Application/Features/Auth/DTOs/DashboardStatsDto.cs)
-- [GetDashboardStatsQueryHandler.cs](../twk_endpoint_hub_api/src/Application/Features/Auth/Queries/GetDashboardStatsQueryHandler.cs)
-- [OrganizationReadTests.cs](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/OrganizationReadTests.cs)
-- [ViewerHttpTests.cs](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/ViewerHttpTests.cs)
-- [DashboardReadTests.cs](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/DashboardReadTests.cs)
+- [OrganizationReadService.cs](../endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs)
+- [MembershipState.cs](../endpoint_hub_api/src/Application/Features/Organizations/MembershipState.cs)
+- [DashboardStatsDto.cs](../endpoint_hub_api/src/Application/Features/Auth/DTOs/DashboardStatsDto.cs)
+- [GetDashboardStatsQueryHandler.cs](../endpoint_hub_api/src/Application/Features/Auth/Queries/GetDashboardStatsQueryHandler.cs)
+- [OrganizationReadTests.cs](../endpoint_hub_api/tests/TenantAuthorization.Tests/OrganizationReadTests.cs)
+- [ViewerHttpTests.cs](../endpoint_hub_api/tests/TenantAuthorization.Tests/ViewerHttpTests.cs)
+- [DashboardReadTests.cs](../endpoint_hub_api/tests/TenantAuthorization.Tests/DashboardReadTests.cs)
 
 Phase 11.1 stops here. No conditional grant, lifecycle implementation or additional authority was approved or provisioned.

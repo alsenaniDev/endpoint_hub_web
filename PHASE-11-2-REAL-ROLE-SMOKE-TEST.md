@@ -162,17 +162,17 @@ No grants were added to overcome any failure.
 
 ### Backend and validation tooling
 
-- [SQL capture interceptor](../twk_endpoint_hub_api/src/Api/Validation/RelationalValidationSqlInterceptor.cs): shared file serialization, not authorization changes.
-- [SQL capture regressions](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/RelationalValidationSqlInterceptorTests.cs).
-- [Browser fixture lifecycle](../twk_endpoint_hub_api/tests/TenantAuthorization.LiveValidation/AngularUiSmoke.cs).
-- [Organization validation harness](../twk_endpoint_hub_api/tests/TenantAuthorization.LiveValidation/OrganizationRoleValidation.cs).
-- [Browser fixture enums](../twk_endpoint_hub_api/tests/TenantAuthorization.LiveValidation/BrowserFixtureEnums.cs).
-- [Validation entry point](../twk_endpoint_hub_api/tests/TenantAuthorization.LiveValidation/Program.cs).
-- [Live validation project](../twk_endpoint_hub_api/tests/TenantAuthorization.LiveValidation/TenantAuthorization.LiveValidation.csproj).
-- [Validation documentation](../twk_endpoint_hub_api/tests/TenantAuthorization.LiveValidation/README.md).
-- [Browser fixture tests](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/AngularUiSmokeTests.cs).
-- [Fixture enum regressions](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/BrowserFixtureEnumTests.cs).
-- [Backend test project](../twk_endpoint_hub_api/tests/TenantAuthorization.Tests/TenantAuthorization.Tests.csproj).
+- [SQL capture interceptor](../endpoint_hub_api/src/Api/Validation/RelationalValidationSqlInterceptor.cs): shared file serialization, not authorization changes.
+- [SQL capture regressions](../endpoint_hub_api/tests/TenantAuthorization.Tests/RelationalValidationSqlInterceptorTests.cs).
+- [Browser fixture lifecycle](../endpoint_hub_api/tests/TenantAuthorization.LiveValidation/AngularUiSmoke.cs).
+- [Organization validation harness](../endpoint_hub_api/tests/TenantAuthorization.LiveValidation/OrganizationRoleValidation.cs).
+- [Browser fixture enums](../endpoint_hub_api/tests/TenantAuthorization.LiveValidation/BrowserFixtureEnums.cs).
+- [Validation entry point](../endpoint_hub_api/tests/TenantAuthorization.LiveValidation/Program.cs).
+- [Live validation project](../endpoint_hub_api/tests/TenantAuthorization.LiveValidation/TenantAuthorization.LiveValidation.csproj).
+- [Validation documentation](../endpoint_hub_api/tests/TenantAuthorization.LiveValidation/README.md).
+- [Browser fixture tests](../endpoint_hub_api/tests/TenantAuthorization.Tests/AngularUiSmokeTests.cs).
+- [Fixture enum regressions](../endpoint_hub_api/tests/TenantAuthorization.Tests/BrowserFixtureEnumTests.cs).
+- [Backend test project](../endpoint_hub_api/tests/TenantAuthorization.Tests/TenantAuthorization.Tests.csproj).
 
 No schema/migration files, permission definitions or grant mappings were changed. No new product DTO or authorization bypass was added.
 

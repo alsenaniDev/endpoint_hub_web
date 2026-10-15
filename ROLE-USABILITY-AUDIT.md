@@ -91,7 +91,7 @@ This bundle does not authorize browsing named API documentation, inspecting bodi
 
 ## Viewer: bootstrap blocker
 
-Backend [OrganizationReadService](../twk_endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs) declares membership `State` as a string and projects `"Active"`. Viewer discovery explicitly applies [ViewerContentPolicy](../twk_endpoint_hub_api/src/Application/Common/Authorization/ViewerContentPolicy.cs), which replaces arbitrary strings with `[restricted]`. Permission metadata has a dedicated safe exception; membership state does not.
+Backend [OrganizationReadService](../endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs) declares membership `State` as a string and projects `"Active"`. Viewer discovery explicitly applies [ViewerContentPolicy](../endpoint_hub_api/src/Application/Common/Authorization/ViewerContentPolicy.cs), which replaces arbitrary strings with `[restricted]`. Permission metadata has a dedicated safe exception; membership state does not.
 
 Angular [OrganizationContextService](src/app/core/services/organization-context.service.ts) rejects discovery/current/refresh memberships unless `state === 'Active'`. It consequently reports `org.loadFailed`, never becomes ready, and cannot establish the organization required by tenant routes.
 
@@ -213,5 +213,5 @@ Do not call the current audit a completed real-user acceptance test. Backend cer
 - [Teams](src/app/features/teams/teams.component.ts), [systems](src/app/features/systems/systems.component.ts), [environments](src/app/features/environments/environments.component.ts)
 - [Endpoint list](src/app/features/endpoints/endpoint-list/endpoint-list.component.ts), [list actions](src/app/features/endpoints/endpoint-list/endpoint-list.component.html), [detail actions](src/app/features/endpoints/endpoint-detail/endpoint-detail.component.html)
 - [Governance detail](src/app/features/governance/governance-detail/governance-detail.component.html), [notification bell](src/app/shared/components/notification-bell/notification-bell.component.ts), [dashboard](src/app/features/dashboard/dashboard.component.ts), [API mappings](src/app/core/services/api.service.ts)
-- [Organization read contract](../twk_endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs), [Viewer projection](../twk_endpoint_hub_api/src/Application/Common/Authorization/ViewerContentPolicy.cs), [endpoint controller](../twk_endpoint_hub_api/src/Api/Controllers/EndpointsController.cs)
-- [Checkpoint 10.10 live certification report](../twk_endpoint_hub_api/src/Infrastructure.BaselineMigrations/LIVE-ORGANIZATION-ROLE-VALIDATION-CHECKPOINT-10-10.md)
+- [Organization read contract](../endpoint_hub_api/src/Application/Features/Organizations/OrganizationReadService.cs), [Viewer projection](../endpoint_hub_api/src/Application/Common/Authorization/ViewerContentPolicy.cs), [endpoint controller](../endpoint_hub_api/src/Api/Controllers/EndpointsController.cs)
+- [Checkpoint 10.10 live certification report](../endpoint_hub_api/src/Infrastructure.BaselineMigrations/LIVE-ORGANIZATION-ROLE-VALIDATION-CHECKPOINT-10-10.md)

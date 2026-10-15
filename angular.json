@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "twk_endpoint_hub_web": {
+    "endpoint_hub_web": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -31,7 +31,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/twk_endpoint_hub_web",
+            "outputPath": "dist/endpoint_hub_web",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -149,16 +149,16 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "twk_endpoint_hub_web:build:production"
+              "browserTarget": "endpoint_hub_web:build:production"
             },
             "development": {
-              "browserTarget": "twk_endpoint_hub_web:build:development"
+              "browserTarget": "endpoint_hub_web:build:development"
             },
             "develop": {
-              "browserTarget": "twk_endpoint_hub_web:build:development"
+              "browserTarget": "endpoint_hub_web:build:development"
             },
             "testing": {
-              "browserTarget": "twk_endpoint_hub_web:build:testing"
+              "browserTarget": "endpoint_hub_web:build:testing"
             }
           },
           "defaultConfiguration": "development"
@@ -166,7 +166,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "twk_endpoint_hub_web:build"
+            "browserTarget": "endpoint_hub_web:build"
           }
         }
       }

@@ -1,4 +1,4 @@
-# TWK Endpoints Hub
+# Endpoints Hub
 
 This application uses Angular 16.2 standalone components and signals.
 
