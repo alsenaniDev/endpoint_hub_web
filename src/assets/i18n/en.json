@@ -322,7 +322,7 @@
   "org.pendingInvitationExists": "A pending invitation already exists for this email.",
   "org.finalOwnerRequired": "Transfer ownership before removing or demoting the last owner.",
   "org.membershipUnavailable": "This membership is no longer valid. Refresh and try again.",
-  "org.assignableRoleUnavailable": "That role is not available for this organization.",,
+  "org.assignableRoleUnavailable": "That role is not available for this organization.",
   "org.invitationsUnsupported": "Invitation controls require organizations.invitations.manage.",
   "org.pendingUnsupported": "Pending invitations are visible only to members with invitation-management permission.",
   "org.acceptInvitation": "Accept invitation",
