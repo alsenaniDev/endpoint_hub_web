@@ -3,7 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { OrganizationInvitation, OrganizationLifecycleResult, OrganizationMember, OrganizationRole, apiErrorKey } from '../../core/models/organization';
+import { firstValueFrom } from 'rxjs';
+import { OrganizationInvitation, OrganizationMember, OrganizationRole, apiErrorKey } from '../../core/models/organization';
 import { AuthService } from '../../core/services/auth.service';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
@@ -114,7 +115,6 @@ export class OrganizationLifecyclePanelComponent implements OnInit, OnChanges {
   readonly assignableRoles = signal<OrganizationRole[]>([]);
   readonly invitations = signal<OrganizationInvitation[]>([]);
   readonly roleSelections = signal<Record<string, string>>({});
-  readonly organizationName = '';
   inviteEmail = '';
   inviteRoleId = '';
   readonly busy = signal(false);
@@ -128,7 +128,6 @@ export class OrganizationLifecyclePanelComponent implements OnInit, OnChanges {
 
   private nameDraft = signal('');
 
-  get organizationNameValue(): string { return this.nameDraft(); }
   set organizationName(value: string) { this.nameDraft.set(value); }
   get organizationName(): string { return this.nameDraft(); }
 
