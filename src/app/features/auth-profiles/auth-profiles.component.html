@@ -4,7 +4,7 @@
       <h1 class="page-title">{{ 'authProfiles.title' | t }}</h1>
       <p class="page-subtitle">{{ 'authProfiles.subtitle' | t }}</p>
     </div>
-    <button *ngIf="auth.hasPermission('authprofiles.manage')" class="btn-primary" (click)="openForm()">{{
+    <button *ngIf="auth.hasPermission('authprofiles.create')" class="btn-primary" (click)="openForm()">{{
       'authProfiles.newBtn' | t }}</button>
   </div>
 
@@ -206,12 +206,12 @@
       <div class="profile-desc">{{ p.description }}</div>
       <div class="default-badge" *ngIf="p.isDefault">{{ 'authProfiles.default' | t }}</div>
       <div class="profile-actions">
-        <button class="btn-sm btn-test" (click)="testAuth(p)" [disabled]="testingId() === p.id">
+        <button *ngIf="auth.hasPermission('authprofiles.test')" class="btn-sm btn-test" (click)="testAuth(p)" [disabled]="testingId() === p.id">
           {{ testingId() === p.id ? 'Testing…' : 'Test Auth' }}
         </button>
-        <button *ngIf="auth.hasPermission('authprofiles.manage')" class="btn-sm btn-secondary" (click)="openForm(p)">{{
+        <button *ngIf="auth.hasPermission('authprofiles.update')" class="btn-sm btn-secondary" (click)="openForm(p)">{{
           'common.edit' | t }}</button>
-        <button *ngIf="auth.hasPermission('authprofiles.manage')" class="btn-sm btn-danger" (click)="delete(p.id)">{{
+        <button *ngIf="auth.hasPermission('authprofiles.delete')" class="btn-sm btn-danger" (click)="delete(p.id)">{{
           'common.delete' | t }}</button>
       </div>
     </div>
