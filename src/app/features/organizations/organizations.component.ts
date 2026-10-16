@@ -126,7 +126,7 @@ import { OrganizationLifecyclePanelComponent } from './organization-lifecycle-pa
             <app-organization-lifecycle-panel mode="invitations" (changed)="reload()"></app-organization-lifecycle-panel>
           </section>
           <ng-container *ngIf="activeTab === 'members'">
-          <app-organization-lifecycle-panel mode="members" [members]="members()" [roles]="roles()"
+          <app-organization-lifecycle-panel mode="members" [members]="members()"
             (changed)="reload()"></app-organization-lifecycle-panel>
           <div class="membership-strip">
             <div><span>{{ 'members.directoryCount' | t }}</span><strong>{{ members().length }}</strong></div>
