@@ -9,11 +9,12 @@ import { OrganizationMember, OrganizationRole } from '../../core/models/organiza
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { apiErrorKey } from '../../core/models/organization';
 import { managementPermissions } from '../../core/authorization/organization-navigation';
+import { OrganizationLifecyclePanelComponent } from './organization-lifecycle-panel.component';
 
 @Component({
   selector: 'app-organizations',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, OrganizationLifecyclePanelComponent],
   template: `
     <section class="organization-settings" *ngIf="!workbench; else membersWorkspace">
       <h1>{{ 'org.settings' | t }}</h1>
@@ -132,7 +133,7 @@ import { managementPermissions } from '../../core/authorization/organization-nav
             <div><span>{{ 'members.availableRoles' | t }}</span><strong>{{ roles().length }}</strong></div>
             <div><span>{{ 'org.myRole' | t }}</span><strong data-testid="membership-role">{{ context.structuralOnly() ? context.membership()?.role?.id : context.membership()?.role?.name }}</strong></div>
           </div>
-          <div class="members-access-note"><span class="pi pi-info-circle" aria-hidden="true"></span><div><strong>{{ 'members.readOnlyDirectory' | t }}</strong><p>{{ 'org.memberActionsUnsupported' | t }}</p></div></div>
+          <div class="members-access-note" *ngIf="!context.hasPermission('organizations.members.manage')"><span class="pi pi-info-circle" aria-hidden="true"></span><div><strong>{{ 'members.readOnlyDirectory' | t }}</strong><p>{{ 'org.memberActionsUnsupported' | t }}</p></div></div>
           <section class="member-directory" *ngIf="activeTab === 'members'">
             <div class="directory-toolbar">
               <label class="member-search" *ngIf="!context.structuralOnly()"><span class="pi pi-search" aria-hidden="true"></span><input type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" [placeholder]="'members.search' | t" [attr.aria-label]="'members.search' | t"></label>
