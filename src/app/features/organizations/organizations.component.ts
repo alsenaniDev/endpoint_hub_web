@@ -119,11 +119,15 @@ import { OrganizationLifecyclePanelComponent } from './organization-lifecycle-pa
               <div><strong>{{ 'members.readOnly' | t }}</strong><p>{{ 'org.creationUnsupported' | t }}</p></div>
             </div>
           </section>
+          <app-organization-lifecycle-panel *ngIf="activeTab === 'organization'" mode="organization"
+            (changed)="reload()"></app-organization-lifecycle-panel>
           <section class="invitations-panel" *ngIf="activeTab === 'invitations'" aria-labelledby="invitations-title">
             <header class="settings-panel-heading"><div><h2 id="invitations-title">{{ 'org.invitations' | t }}</h2></div></header>
             <app-organization-lifecycle-panel mode="invitations" (changed)="reload()"></app-organization-lifecycle-panel>
           </section>
           <ng-container *ngIf="activeTab === 'members'">
+          <app-organization-lifecycle-panel mode="members" [members]="members()" [roles]="roles()"
+            (changed)="reload()"></app-organization-lifecycle-panel>
           <div class="membership-strip">
             <div><span>{{ 'members.directoryCount' | t }}</span><strong>{{ members().length }}</strong></div>
             <div><span>{{ 'members.activeCount' | t }}</span><strong>{{ activeMemberCount() }}</strong></div>
