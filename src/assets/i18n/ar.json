@@ -322,7 +322,7 @@
   "org.pendingInvitationExists": "توجد دعوة معلقة لهذا البريد الإلكتروني بالفعل.",
   "org.finalOwnerRequired": "يجب نقل الملكية قبل إزالة آخر مالك أو خفض دوره.",
   "org.membershipUnavailable": "لم تعد هذه العضوية صالحة. حدّث الصفحة ثم حاول مجدداً.",
-  "org.assignableRoleUnavailable": "هذا الدور غير متاح لهذه المؤسسة.",,
+  "org.assignableRoleUnavailable": "هذا الدور غير متاح لهذه المؤسسة.",
   "org.invitationsUnsupported": "تتطلب إدارة الدعوات صلاحية organizations.invitations.manage.",
   "org.pendingUnsupported": "تظهر الدعوات المعلقة للأعضاء الذين يملكون صلاحية إدارة الدعوات فقط.",
   "org.acceptInvitation": "قبول الدعوة",
