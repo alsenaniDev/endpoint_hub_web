@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, ReactiveFormsModule, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { TranslateService } from '../../../core/services/translate.service';
@@ -17,6 +17,7 @@ import { TranslateService } from '../../../core/services/translate.service';
 export class LoginComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private translations = inject(TranslateService);
 
@@ -60,11 +61,19 @@ export class LoginComponent {
     this.auth.login({ email: usernameOrEmail, password }).subscribe({
       next: result => {
         this.loading.set(false);
-        if (result.success && result.data) this.router.navigate(['/start']);
+        if (result.success && result.data) void this.router.navigateByUrl(this.postLoginUrl());
         else this.error.set(result.message ?? this.translations.t('access.loginFailed'));
       },
       error: (err) => { this.loading.set(false); this.error.set(err?.error?.message ?? this.translations.t('access.loginFailed')); }
     });
+  }
+
+  private postLoginUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    // Only restore the expected invitation route. Never accept arbitrary redirect targets.
+    return returnUrl && returnUrl.split('?')[0] === '/invitations/accept'
+      ? returnUrl
+      : '/start';
   }
 
   register(): void {
