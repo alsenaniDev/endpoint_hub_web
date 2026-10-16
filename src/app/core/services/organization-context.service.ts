@@ -6,7 +6,7 @@ import { ApiResponse } from '../models/models';
 import { canEnterDashboard, managementPermissions } from '../authorization/organization-navigation';
 import {
   apiErrorKey, Organization, OrganizationContext, OrganizationDiscovery, OrganizationMember,
-  OrganizationRole, organizationIdPattern
+  OrganizationRole, OrganizationInvitation, OrganizationLifecycleResult, organizationIdPattern
 } from '../models/organization';
 
 @Injectable({ providedIn: 'root' })
@@ -222,6 +222,98 @@ export class OrganizationContextService {
 
   getRoles() {
     return this.http.get<ApiResponse<OrganizationRole[]>>(`${this.base}/current/roles`);
+  }
+
+  getAssignableRoles() {
+    return this.http.get<ApiResponse<OrganizationRole[]>>(`${this.base}/current/assignable-roles`);
+  }
+
+  getInvitations() {
+    return this.http.get<ApiResponse<OrganizationInvitation[]>>(`${this.base}/current/invitations`);
+  }
+
+  updateOrganizationName(name: string) {
+    return this.http.patch<ApiResponse<OrganizationLifecycleResult>>(`${this.base}/current`, { name });
+  }
+
+  createInvitation(email: string, roleId: string) {
+    return this.http.post<ApiResponse<OrganizationLifecycleResult>>(`${this.base}/current/invitations`, { email, roleId });
+  }
+
+  cancelInvitation(id: string) {
+    return this.http.delete<ApiResponse<boolean>>(`${this.base}/current/invitations/${encodeURIComponent(id)}`);
+  }
+
+  changeMemberRole(id: string, roleId: string) {
+    return this.http.put<ApiResponse<OrganizationLifecycleResult>>(
+      `${this.base}/current/members/${encodeURIComponent(id)}/role`, { roleId });
+  }
+
+  removeMember(id: string) {
+    return this.http.delete<ApiResponse<OrganizationLifecycleResult>>(
+      `${this.base}/current/members/${encodeURIComponent(id)}`);
+  }
+
+  leaveOrganization() {
+    return this.http.post<ApiResponse<OrganizationLifecycleResult>>(`${this.base}/current/leave`, {});
+  }
+
+  acceptInvitation(token: string) {
+    return this.http.post<ApiResponse<OrganizationLifecycleResult>>(
+      `${environment.apiUrl}/organization-invitations/accept`, { token });
+  }
+
+  async refreshDiscoveryWithoutSwitching(clearCurrent = false): Promise<boolean> {
+    const userId = this.userId;
+    if (!userId) return false;
+    if (clearCurrent) {
+      this.clearTenantState();
+      this.selected.set(null);
+      this.context.set(null);
+      this.removeSelection();
+    }
+    const version = this.generation;
+    this.loadingState.set(true);
+    try {
+      const result = await firstValueFrom(this.http.get<ApiResponse<OrganizationDiscovery>>(this.base));
+      if (version !== this.generation) return false;
+      if (!result.success || !result.data || !Array.isArray(result.data.organizations) ||
+          result.data.organizations.some(o => !organizationIdPattern.test(o.id) ||
+            o.membership.userId !== userId || o.membership.state !== 'Active' ||
+            typeof o.membership.isReadOnly !== 'boolean')) {
+        throw new Error('Invalid organization discovery response.');
+      }
+      const organizations = Object.freeze(result.data.organizations.map(o => this.freezeOrganization(o)));
+      this.organizationState.set(organizations);
+      this.platform.set(result.data.canManageUsers === true);
+      this.initialized = true;
+      if (!clearCurrent) {
+        const selectedId = this.activeOrganizationId();
+        if (selectedId) {
+          const selected = organizations.find(o => o.id === selectedId);
+          if (selected) {
+            this.selected.set(selected);
+            const currentContext = this.context();
+            if (currentContext) this.context.set(this.freezeContext({ ...currentContext, organization: selected }));
+          } else {
+            this.clearTenantState();
+            this.selected.set(null);
+            this.removeSelection();
+          }
+        }
+      }
+      this.loadingState.set(false);
+      this.errorState.set(null);
+      this.changes.next();
+      return true;
+    } catch (error) {
+      if (version === this.generation) {
+        this.fail(error);
+        this.loadingState.set(false);
+        this.changes.next();
+      }
+      return false;
+    }
   }
 
   invalidate(key = 'org.noMembership'): void {
