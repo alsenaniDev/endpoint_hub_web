@@ -106,7 +106,6 @@ type LifecyclePanelMode = 'organization' | 'members' | 'invitations';
 export class OrganizationLifecyclePanelComponent implements OnInit, OnChanges {
   @Input() mode: LifecyclePanelMode = 'members';
   @Input() members: readonly OrganizationMember[] = [];
-  @Input() roles: readonly OrganizationRole[] = [];
   @Output() changed = new EventEmitter<void>();
 
   readonly context = inject(OrganizationContextService);
