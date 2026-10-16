@@ -49,7 +49,8 @@ type LifecyclePanelMode = 'organization' | 'members' | 'invitations';
             <button type="button" (click)="changeRole(member)" [disabled]="busy() || !assignableRoles().length || (roleSelections()[member.id] || member.role.id) === member.role.id">
               {{ 'org.changeRole' | t }}
             </button>
-            <button type="button" class="danger" (click)="remove(member)" [disabled]="busy() || (member.role.name === 'Owner' && !isOwnerActor())">
+            <button *ngIf="member.userId !== currentUserId()" type="button" class="danger" (click)="remove(member)"
+              [disabled]="busy() || (member.role.name === 'Owner' && !isOwnerActor())">
               {{ 'org.removeMember' | t }}
             </button>
           </div>
@@ -120,6 +121,7 @@ export class OrganizationLifecyclePanelComponent implements OnInit, OnChanges {
   readonly canManageMembers = computed(() => this.context.canMutate() && this.context.hasPermission('organizations.members.manage'));
   readonly canManageInvitations = computed(() => this.context.canMutate() && this.context.hasPermission('organizations.invitations.manage'));
   readonly isOwnerActor = computed(() => this.context.membership()?.role.name === 'Owner');
+  readonly currentUserId = computed(() => this.auth.currentUser()?.userId ?? null);
   readonly invitableRoles = computed(() => this.assignableRoles().filter(role => role.name !== 'Owner'));
 
   private nameDraft = signal('');
