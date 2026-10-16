@@ -4,7 +4,6 @@ import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorKey } from '../../core/models/organization';
-import { AuthService } from '../../core/services/auth.service';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 
@@ -31,7 +30,6 @@ export class InvitationAcceptComponent {
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly context = inject(OrganizationContextService);
-  private readonly auth = inject(AuthService);
 
   readonly token = signal<string | null>(null);
   readonly loading = signal(false);
