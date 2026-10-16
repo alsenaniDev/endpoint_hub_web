@@ -84,9 +84,6 @@ type LifecyclePanelMode = 'organization' | 'members' | 'invitations';
         <ng-template #invitationsReadOnly>
           <p>{{ 'org.invitationsUnsupported' | t }}</p>
           <p>{{ 'org.pendingUnsupported' | t }}</p>
-          <label>{{ 'org.inviteEmail' | t }} <input type="email" disabled autocomplete="off"></label>
-          <label>{{ 'org.role' | t }} <select disabled><option>{{ 'org.assignableRolesUnavailable' | t }}</option></select></label>
-          <button type="button" disabled>{{ 'org.invite' | t }}</button>
         </ng-template>
       </ng-container>
     </section>
