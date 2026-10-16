@@ -15,6 +15,7 @@ export function apiRequestPath(url: string): string | null {
 
 export function requiresOrganization(path: string): boolean {
   return !path.startsWith('auth/') && path !== 'organizations' &&
+    path !== 'organization-invitations/accept' &&
     path !== 'teams/public' && path !== 'users' && !path.startsWith('users/');
 }
 

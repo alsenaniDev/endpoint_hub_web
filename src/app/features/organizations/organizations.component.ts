@@ -9,11 +9,12 @@ import { OrganizationMember, OrganizationRole } from '../../core/models/organiza
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { apiErrorKey } from '../../core/models/organization';
 import { managementPermissions } from '../../core/authorization/organization-navigation';
+import { OrganizationLifecyclePanelComponent } from './organization-lifecycle-panel.component';
 
 @Component({
   selector: 'app-organizations',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe, OrganizationLifecyclePanelComponent],
   template: `
     <section class="organization-settings" *ngIf="!workbench; else membersWorkspace">
       <h1>{{ 'org.settings' | t }}</h1>
@@ -118,21 +119,22 @@ import { managementPermissions } from '../../core/authorization/organization-nav
               <div><strong>{{ 'members.readOnly' | t }}</strong><p>{{ 'org.creationUnsupported' | t }}</p></div>
             </div>
           </section>
+          <app-organization-lifecycle-panel *ngIf="activeTab === 'organization'" mode="organization"
+            (changed)="reload()"></app-organization-lifecycle-panel>
           <section class="invitations-panel" *ngIf="activeTab === 'invitations'" aria-labelledby="invitations-title">
             <header class="settings-panel-heading"><div><h2 id="invitations-title">{{ 'org.invitations' | t }}</h2></div></header>
-            <div class="unavailable-feature" role="status">
-              <span class="pi pi-info-circle" aria-hidden="true"></span>
-              <div><strong>{{ 'org.invitationsUnsupported' | t }}</strong><p>{{ 'org.pendingUnsupported' | t }}</p></div>
-            </div>
+            <app-organization-lifecycle-panel mode="invitations" (changed)="reload()"></app-organization-lifecycle-panel>
           </section>
           <ng-container *ngIf="activeTab === 'members'">
+          <app-organization-lifecycle-panel mode="members" [members]="members()"
+            (changed)="reload()"></app-organization-lifecycle-panel>
           <div class="membership-strip">
             <div><span>{{ 'members.directoryCount' | t }}</span><strong>{{ members().length }}</strong></div>
             <div><span>{{ 'members.activeCount' | t }}</span><strong>{{ activeMemberCount() }}</strong></div>
             <div><span>{{ 'members.availableRoles' | t }}</span><strong>{{ roles().length }}</strong></div>
             <div><span>{{ 'org.myRole' | t }}</span><strong data-testid="membership-role">{{ context.structuralOnly() ? context.membership()?.role?.id : context.membership()?.role?.name }}</strong></div>
           </div>
-          <div class="members-access-note"><span class="pi pi-info-circle" aria-hidden="true"></span><div><strong>{{ 'members.readOnlyDirectory' | t }}</strong><p>{{ 'org.memberActionsUnsupported' | t }}</p></div></div>
+          <div class="members-access-note" *ngIf="!context.hasPermission('organizations.members.manage')"><span class="pi pi-info-circle" aria-hidden="true"></span><div><strong>{{ 'members.readOnlyDirectory' | t }}</strong><p>{{ 'org.memberActionsUnsupported' | t }}</p></div></div>
           <section class="member-directory" *ngIf="activeTab === 'members'">
             <div class="directory-toolbar">
               <label class="member-search" *ngIf="!context.structuralOnly()"><span class="pi pi-search" aria-hidden="true"></span><input type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" [placeholder]="'members.search' | t" [attr.aria-label]="'members.search' | t"></label>
