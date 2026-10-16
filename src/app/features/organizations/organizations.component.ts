@@ -121,10 +121,7 @@ import { OrganizationLifecyclePanelComponent } from './organization-lifecycle-pa
           </section>
           <section class="invitations-panel" *ngIf="activeTab === 'invitations'" aria-labelledby="invitations-title">
             <header class="settings-panel-heading"><div><h2 id="invitations-title">{{ 'org.invitations' | t }}</h2></div></header>
-            <div class="unavailable-feature" role="status">
-              <span class="pi pi-info-circle" aria-hidden="true"></span>
-              <div><strong>{{ 'org.invitationsUnsupported' | t }}</strong><p>{{ 'org.pendingUnsupported' | t }}</p></div>
-            </div>
+            <app-organization-lifecycle-panel mode="invitations" (changed)="reload()"></app-organization-lifecycle-panel>
           </section>
           <ng-container *ngIf="activeTab === 'members'">
           <div class="membership-strip">
