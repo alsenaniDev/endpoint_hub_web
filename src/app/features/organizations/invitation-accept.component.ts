@@ -1,7 +1,7 @@
 import { CommonModule, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { apiErrorKey } from '../../core/models/organization';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
@@ -10,7 +10,7 @@ import { TranslatePipe } from '../../core/pipes/translate.pipe';
 @Component({
   selector: 'app-invitation-accept',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <section class="invitation-accept" aria-labelledby="invitation-title">
       <h1 id="invitation-title">{{ 'org.acceptInvitation' | t }}</h1>
@@ -21,7 +21,7 @@ import { TranslatePipe } from '../../core/pipes/translate.pipe';
       <button type="button" (click)="accept()" [disabled]="!token() || loading() || !!outcome()">
         {{ 'org.acceptInvitationAction' | t }}
       </button>
-      <a routerLink="/organizations">{{ 'org.settings' | t }}</a>
+      <a href="/organizations">{{ 'org.settings' | t }}</a>
     </section>
   `
 })
