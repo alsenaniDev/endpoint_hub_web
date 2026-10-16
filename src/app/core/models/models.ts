@@ -53,7 +53,8 @@ export interface EndpointDetail {
 
 // ── Auth Profiles ─────────────────────────────────────────────────────────────
 export type AuthProfileType = 'NoAuth' | 'BearerToken' | 'ApiKey' | 'BasicAuth' | 'CustomHeader' | 'AutoLoginToken';
-export interface AuthProfile { id: string; name: string; description?: string; type: AuthProfileType; systemId?: string; environmentId?: string; isDefault: boolean; apiKeyHeaderName?: string; customHeaderName?: string; loginUrl?: string; loginMethod?: string; loginRequestBodyTemplate?: string; tokenJsonPath?: string; tokenPrefix?: string; extraHeaders?: string; preAuthProfileId?: string; preAuthProfileName?: string; createdAt: string; }
+export interface AuthProfile { id: string; name: string; description?: string; type: AuthProfileType; systemId?: string; environmentId?: string; isDefault: boolean; preAuthProfileId?: string; preAuthProfileName?: string; createdAt: string; }
+export interface AuthProfileDetails extends AuthProfile { apiKeyHeaderName?: string; customHeaderName?: string; loginUrl?: string; loginMethod?: string; loginRequestBodyTemplate?: string; tokenJsonPath?: string; tokenPrefix?: string; tokenExpirySeconds?: number; extraHeaders?: string; }
 export interface CreateAuthProfileRequest { name: string; description?: string; type: AuthProfileType; systemId?: string; environmentId?: string; token?: string; apiKeyHeaderName?: string; apiKeyValue?: string; username?: string; password?: string; customHeaderName?: string; customHeaderValue?: string; loginUrl?: string; loginMethod?: string; loginRequestBodyTemplate?: string; tokenJsonPath?: string; tokenPrefix?: string; tokenExpirySeconds?: number; preAuthProfileId?: string; isDefault: boolean; }
 export interface TestAuthProfileResult { isSuccess: boolean; generatedHeaders: Record<string, string>; extractedToken?: string; loginResponseBody?: string; loginStatusCode?: number; loginResponseTimeMs?: number; error?: string; }
 
