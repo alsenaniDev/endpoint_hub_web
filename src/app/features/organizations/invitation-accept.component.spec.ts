@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { authInterceptor } from '../../core/interceptors/auth.interceptor';
+import { AuthService } from '../../core/services/auth.service';
 import { apiBase } from '../../core/services/organization.fixtures.spec';
 import { OrganizationContextService } from '../../core/services/organization-context.service';
 import { TranslateService } from '../../core/services/translate.service';
@@ -22,12 +23,10 @@ describe('InvitationAcceptComponent', () => {
         { provide: Router, useValue: { url: '/invitations/accept?token=one-time-secret' } },
         { provide: Location, useValue: { replaceState } },
         { provide: TranslateService, useValue: { t: (key: string) => key, translations$: of({}) } },
-        { provide: 'AuthService', useValue: { getToken: () => 'test-jwt', logout: jasmine.createSpy('logout') } }
+        { provide: AuthService, useValue: { getToken: () => 'test-jwt', logout: jasmine.createSpy('logout') } }
       ]
     }).compileComponents();
 
-    const { AuthService } = await import('../../core/services/auth.service');
-    TestBed.overrideProvider(AuthService, { useValue: { getToken: () => 'test-jwt', logout: jasmine.createSpy('logout') } });
     const fixture = TestBed.createComponent(InvitationAcceptComponent);
     fixture.detectChanges();
     expect(replaceState).toHaveBeenCalledWith('/invitations/accept');
