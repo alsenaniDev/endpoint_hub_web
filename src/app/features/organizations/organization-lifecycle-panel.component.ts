@@ -213,7 +213,7 @@ export class OrganizationLifecyclePanelComponent implements OnInit, OnChanges {
     this.busy.set(true); this.error.set(null); this.message.set(null);
     try {
       await firstValueFrom(this.context.cancelInvitation(invitation.id));
-      this.message.set('org.invitationCancelled');
+      this.message.set('org.invitationCancelledSuccess');
       await this.loadInvitations();
     } catch (error) { this.error.set(this.errorKey(error)); }
     finally { this.busy.set(false); }
