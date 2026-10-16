@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { AuthProfile, SystemDto, AuthProfileType, TestAuthProfileResult } from '../../core/models/models';
+import { AuthProfile, AuthProfileDetails, SystemDto, AuthProfileType, TestAuthProfileResult } from '../../core/models/models';
 import { LoadingComponent } from '../../shared/components/loading/loading.component';
 import { JsonViewerComponent } from '../../shared/components/json-viewer/json-viewer.component';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
@@ -99,39 +99,54 @@ export class AuthProfilesComponent implements OnInit {
   onSysFilter(val: string | null): void { this.selectedSystemId = val ?? ''; this.loadProfiles(); }
 
   openForm(p?: AuthProfile): void {
+    if (!p) {
+      this.populateForm();
+      return;
+    }
+
+    // Configuration is deliberately fetched only when an authorized editor opens a profile.
+    this.api.getAuthProfile(p.id).subscribe({
+      next: response => {
+        if (response.success && response.data) this.populateForm(p, response.data);
+      }
+    });
+  }
+
+  private populateForm(p?: AuthProfile, details?: AuthProfileDetails): void {
     this.editingId = p?.id ?? null;
     this.form.reset({
       systemId: p?.systemId ?? '', name: p?.name ?? '', type: p?.type ?? 'BearerToken',
-      description: p?.description ?? '', token: '', apiKeyHeaderName: p?.apiKeyHeaderName ?? '',
+      description: p?.description ?? '', token: '', apiKeyHeaderName: details?.apiKeyHeaderName ?? '',
       username: '', password: '',
-      customHeaderName: p?.customHeaderName ?? '', customHeaderValue: '',
-      loginUrl: p?.loginUrl ?? '', loginMethod: p?.loginMethod ?? 'POST', loginRequestBodyTemplate: '',
-      tokenJsonPath: p?.tokenJsonPath ?? '', tokenPrefix: p?.tokenPrefix ?? 'Bearer',
-      tokenExpirySeconds: null, isDefault: p?.isDefault ?? false,
+      customHeaderName: details?.customHeaderName ?? '', customHeaderValue: '',
+      loginUrl: details?.loginUrl ?? '', loginMethod: details?.loginMethod ?? 'POST', loginRequestBodyTemplate: '',
+      tokenJsonPath: details?.tokenJsonPath ?? '', tokenPrefix: details?.tokenPrefix ?? 'Bearer',
+      tokenExpirySeconds: details?.tokenExpirySeconds ?? null, isDefault: p?.isDefault ?? false,
       preAuthProfileId: p?.preAuthProfileId ?? null
     });
-    // Populate extra headers from JSON
+
     while (this.extraHeadersArray.length) this.extraHeadersArray.removeAt(0);
-    if (p?.extraHeaders) {
+    if (details?.extraHeaders) {
       try {
-        const parsed: Record<string, string> = JSON.parse(p.extraHeaders);
+        const parsed: Record<string, string> = JSON.parse(details.extraHeaders);
         Object.entries(parsed).forEach(([key, value]) => {
           this.extraHeadersArray.push(this.fb.group({ key: [key], value: [value] }));
         });
-      } catch { /* ignore */ }
+      } catch { /* ignore malformed legacy configuration */ }
     }
-    // Populate login query params (GET) or body template (POST) from loginRequestBodyTemplate
+
     while (this.loginQueryParamsArray.length) this.loginQueryParamsArray.removeAt(0);
-    if (p?.loginMethod === 'GET' && p?.loginRequestBodyTemplate) {
+    if (details?.loginMethod === 'GET' && details.loginRequestBodyTemplate) {
       try {
-        const parsed: Record<string, string> = JSON.parse(p.loginRequestBodyTemplate);
+        const parsed: Record<string, string> = JSON.parse(details.loginRequestBodyTemplate);
         Object.entries(parsed).forEach(([key, value]) => {
           this.loginQueryParamsArray.push(this.fb.group({ key: [key], value: [value] }));
         });
-      } catch { /* ignore */ }
-    } else if (p?.loginRequestBodyTemplate) {
-      this.form.patchValue({ loginRequestBodyTemplate: p.loginRequestBodyTemplate });
+      } catch { /* ignore malformed legacy configuration */ }
+    } else if (details?.loginRequestBodyTemplate) {
+      this.form.patchValue({ loginRequestBodyTemplate: details.loginRequestBodyTemplate });
     }
+
     this.showForm = true;
   }
 
