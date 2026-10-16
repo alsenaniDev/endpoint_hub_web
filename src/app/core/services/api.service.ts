@@ -8,7 +8,7 @@ import {
   SystemDto, CreateSystemRequest,
   EnvironmentDto, CreateEnvironmentRequest,
   EndpointListItem, EndpointDetail, HttpMethodType, ChangeStatus,
-  AuthProfile, CreateAuthProfileRequest, TestAuthProfileResult,
+  AuthProfile, AuthProfileDetails, CreateAuthProfileRequest, TestAuthProfileResult,
   AppNotification,
   SyncResult, SyncLog, SyncSchedule, EnvironmentSyncStatus,
   SwaggerSourceDto, CreateSwaggerSourceRequest,
@@ -194,6 +194,9 @@ export class ApiService {
   }
 
   // ── Auth Profiles ─────────────────────────────────────────────────────────
+  getAuthProfile(id: string): Observable<ApiResponse<AuthProfileDetails>> {
+    return this.http.get<ApiResponse<AuthProfileDetails>>(`${this.base}/authprofiles/${id}`);
+  }
   getAuthProfiles(systemId?: string, environmentId?: string): Observable<ApiResponse<AuthProfile[]>> {
     let params = new HttpParams();
     if (systemId) params = params.set('systemId', systemId);
