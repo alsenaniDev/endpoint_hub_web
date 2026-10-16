@@ -127,13 +127,12 @@ describe('Organization member/invitation/role UI', () => {
     http.expectNone(request => request.method !== 'GET');
   });
 
-  it('does not interpret invitation tokens or pretend expired/accepted/invalid outcomes were verified', () => {
+  it('does not submit an invitation without a token', () => {
     const fixture = TestBed.createComponent(InvitationAcceptComponent);
     fixture.detectChanges();
     const element: HTMLElement = fixture.nativeElement;
-    expect(element.textContent).toContain('org.acceptUnsupported');
-    expect(element.textContent).toContain('org.invitationStatesUnsupported');
-    http.expectNone(request => request.url.includes('invitation'));
+    expect(element.textContent).toContain('org.invitationTokenMissing');
+    http.expectNone(request => request.url.includes('organization-invitations/accept'));
   });
 
   it('shows current/available organization names and types without exposing IDs as labels', async () => {
