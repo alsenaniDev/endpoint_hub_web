@@ -88,7 +88,7 @@ export class LoginComponent {
     this.auth.register(payload).subscribe({
       next: result => {
         this.loading.set(false);
-        if (result.success && result.data) this.router.navigate(['/start']);
+        if (result.success && result.data) void this.router.navigateByUrl(this.postLoginUrl());
         else this.error.set(result.message ?? this.translations.t('access.registrationFailed'));
       },
       error: (err) => { this.loading.set(false); this.error.set(err?.error?.message ?? this.translations.t('access.registrationFailed')); }
