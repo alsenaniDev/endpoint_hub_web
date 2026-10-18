@@ -43,6 +43,7 @@ export class AuthProfilesComponent implements OnInit {
   testResult = signal<TestAuthProfileResult | null>(null);
   testingProfileName = signal('');
   copiedToken = signal(false);
+  private testRequestVersion = 0;
 
   authTypes: AuthProfileType[] = ['NoAuth', 'BearerToken', 'ApiKey', 'BasicAuth', 'CustomHeader', 'AutoLoginToken'];
 
@@ -208,18 +209,26 @@ export class AuthProfilesComponent implements OnInit {
 
   testAuth(p: AuthProfile): void {
     if (!this.canManageProfiles()) return;
+    const requestVersion = ++this.testRequestVersion;
     this.testingId.set(p.id);
     this.testingProfileName.set(p.name);
     this.testResult.set(null);
     this.copiedToken.set(false);
     this.showTestModal.set(true);
     this.api.testAuthProfile(p.id).subscribe({
-      next: r => { this.testResult.set(r.data ?? null); this.testingId.set(null); },
-      error: () => { this.testingId.set(null); }
+      next: r => {
+        if (requestVersion !== this.testRequestVersion || !this.canManageProfiles()) return;
+        this.testResult.set(r.data ?? null);
+        this.testingId.set(null);
+      },
+      error: () => {
+        if (requestVersion === this.testRequestVersion) this.testingId.set(null);
+      }
     });
   }
 
   closeTestModal(): void {
+    this.testRequestVersion++;
     this.showTestModal.set(false);
     this.testResult.set(null);
     this.testingId.set(null);
