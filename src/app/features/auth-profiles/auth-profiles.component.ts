@@ -44,6 +44,8 @@ export class AuthProfilesComponent implements OnInit {
   testingProfileName = signal('');
   copiedToken = signal(false);
   private testRequestVersion = 0;
+  private profilesRequestVersion = 0;
+  private systemsRequestVersion = 0;
 
   authTypes: AuthProfileType[] = ['NoAuth', 'BearerToken', 'ApiKey', 'BasicAuth', 'CustomHeader', 'AutoLoginToken'];
 
@@ -94,8 +96,11 @@ export class AuthProfilesComponent implements OnInit {
   constructor() {
     this.organization.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (!this.organization.ready()) {
+        this.profilesRequestVersion++;
+        this.systemsRequestVersion++;
         this.profiles.set([]);
         this.systems.set([]);
+        this.selectedSystemId = '';
         this.closeTestModal();
         this.loading.set(true);
         return;
@@ -111,17 +116,32 @@ export class AuthProfilesComponent implements OnInit {
   }
 
   private loadSystems(): void {
+    const requestVersion = ++this.systemsRequestVersion;
+    const organizationId = this.organization.activeOrganizationId();
     this.api.getSystems(undefined, undefined, 1, 100).subscribe({
-      next: r => { if (r.success) this.systems.set(r.data?.items ?? []); },
-      error: () => this.systems.set([])
+      next: r => {
+        if (requestVersion !== this.systemsRequestVersion || organizationId !== this.organization.activeOrganizationId()) return;
+        this.systems.set(r.success ? r.data?.items ?? [] : []);
+      },
+      error: () => {
+        if (requestVersion === this.systemsRequestVersion && organizationId === this.organization.activeOrganizationId()) this.systems.set([]);
+      }
     });
   }
 
   loadProfiles(): void {
     this.loading.set(true);
+    const requestVersion = ++this.profilesRequestVersion;
+    const organizationId = this.organization.activeOrganizationId();
     this.api.getAuthProfiles(this.selectedSystemId || undefined).subscribe({
-      next: r => { if (r.success) this.profiles.set(r.data ?? []); this.loading.set(false); },
-      error: () => this.loading.set(false)
+      next: r => {
+        if (requestVersion !== this.profilesRequestVersion || organizationId !== this.organization.activeOrganizationId()) return;
+        if (r.success) this.profiles.set(r.data ?? []);
+        this.loading.set(false);
+      },
+      error: () => {
+        if (requestVersion === this.profilesRequestVersion && organizationId === this.organization.activeOrganizationId()) this.loading.set(false);
+      }
     });
   }
 
