@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormArray, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { OrganizationContextService } from '../../core/services/organization-context.service';
 import { AuthProfile, SystemDto, AuthProfileType, TestAuthProfileResult } from '../../core/models/models';
 import { LoadingComponent } from '../../shared/components/loading/loading.component';
 import { JsonViewerComponent } from '../../shared/components/json-viewer/json-viewer.component';
@@ -20,7 +21,11 @@ import { TranslatePipe } from '../../core/pipes/translate.pipe';
 export class AuthProfilesComponent implements OnInit {
   private api = inject(ApiService);
   auth = inject(AuthService);
+  private readonly organization = inject(OrganizationContextService);
   private fb = inject(FormBuilder);
+  readonly canManageProfiles = computed(() =>
+    this.organization.canMutate() && this.organization.hasPermission('authprofiles.manage'));
+
 
   profiles = signal<AuthProfile[]>([]);
   systems = signal<SystemDto[]>([]);
@@ -99,6 +104,7 @@ export class AuthProfilesComponent implements OnInit {
   onSysFilter(val: string | null): void { this.selectedSystemId = val ?? ''; this.loadProfiles(); }
 
   openForm(p?: AuthProfile): void {
+    if (!this.canManageProfiles()) return;
     this.editingId = p?.id ?? null;
     this.form.reset({
       systemId: p?.systemId ?? '', name: p?.name ?? '', type: p?.type ?? 'BearerToken',
@@ -138,7 +144,7 @@ export class AuthProfilesComponent implements OnInit {
   closeForm(): void { this.showForm = false; }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (!this.canManageProfiles() || this.form.invalid) return;
     this.saving.set(true);
     const v = this.form.value as any;
     // Serialize extra headers array to JSON
@@ -168,6 +174,7 @@ export class AuthProfilesComponent implements OnInit {
   }
 
   delete(id: string): void {
+    if (!this.canManageProfiles()) return;
     if (!confirm('Delete this auth profile?')) return;
     this.api.deleteAuthProfile(id).subscribe({ next: () => this.loadProfiles() });
   }
@@ -177,6 +184,7 @@ export class AuthProfilesComponent implements OnInit {
   }
 
   testAuth(p: AuthProfile): void {
+    if (!this.canManageProfiles()) return;
     this.testingId.set(p.id);
     this.testingProfileName.set(p.name);
     this.testResult.set(null);
@@ -196,6 +204,7 @@ export class AuthProfilesComponent implements OnInit {
   }
 
   copyToken(): void {
+    if (!this.canManageProfiles()) return;
     const token = this.testResult()?.extractedToken;
     if (!token) return;
     navigator.clipboard.writeText(token).then(() => {
