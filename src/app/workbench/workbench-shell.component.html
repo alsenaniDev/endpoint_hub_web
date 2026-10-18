@@ -38,6 +38,16 @@
       </a>
     </nav>
 
+    <nav *ngIf="canVisitManagement()" class="sidebar-admin-nav"
+      [attr.aria-label]="'workbench.nav.organizationAdministration' | t">
+      <span class="sidebar-section-label">{{ 'workbench.nav.organizationAdministration' | t }}</span>
+      <a routerLink="/workbench/settings/management" routerLinkActive="active" class="nav-link admin-nav-link"
+        (click)="closeMobileNav()">
+        <i class="pi pi-sliders-h" aria-hidden="true"></i>
+        <span>{{ 'workbench.nav.management' | t }}</span>
+      </a>
+    </nav>
+
     <div class="shell-preference-controls" role="group" [attr.aria-label]="'workbench.displayPreferences' | t">
       <button class="shell-preference-button" type="button" (click)="theme.toggle()"
         [attr.aria-label]="(theme.theme() === 'light' ? 'header.switchToDark' : 'header.switchToLight') | t"
