@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormArray, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -22,6 +23,7 @@ export class AuthProfilesComponent implements OnInit {
   private api = inject(ApiService);
   auth = inject(AuthService);
   private readonly organization = inject(OrganizationContextService);
+  private readonly destroyRef = inject(DestroyRef);
   private fb = inject(FormBuilder);
   readonly canManageProfiles = computed(() =>
     this.organization.canMutate() && this.organization.hasPermission('authprofiles.manage'));
@@ -88,9 +90,30 @@ export class AuthProfilesComponent implements OnInit {
     this.loginQueryParamsArray.removeAt(i);
   }
 
+  constructor() {
+    this.organization.changes$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (!this.organization.ready()) {
+        this.profiles.set([]);
+        this.systems.set([]);
+        this.closeTestModal();
+        this.loading.set(true);
+        return;
+      }
+      this.loadSystems();
+      this.loadProfiles();
+    });
+  }
+
   ngOnInit(): void {
-    this.api.getSystems(undefined, undefined, 1, 100).subscribe(r => { if (r.success) this.systems.set(r.data?.items ?? []); });
+    this.loadSystems();
     this.loadProfiles();
+  }
+
+  private loadSystems(): void {
+    this.api.getSystems(undefined, undefined, 1, 100).subscribe({
+      next: r => { if (r.success) this.systems.set(r.data?.items ?? []); },
+      error: () => this.systems.set([])
+    });
   }
 
   loadProfiles(): void {
