@@ -32,6 +32,8 @@ const labels: Record<'en' | 'ar', Record<string, string>> = {
     'workbench.nav.governance': 'Governance',
     'workbench.nav.notifications': 'Notifications',
     'workbench.nav.settings': 'Settings',
+    'workbench.nav.organizationAdministration': 'Organization administration',
+    'workbench.nav.management': 'Management',
     'workbench.displayPreferences': 'Display preferences',
     'workbench.theme.light': 'Light',
     'workbench.theme.dark': 'Dark',
@@ -61,6 +63,8 @@ const labels: Record<'en' | 'ar', Record<string, string>> = {
     'workbench.nav.governance': 'الحوكمة',
     'workbench.nav.notifications': 'الإشعارات',
     'workbench.nav.settings': 'الإعدادات',
+    'workbench.nav.organizationAdministration': 'إدارة المؤسسة',
+    'workbench.nav.management': 'الإدارة',
     'workbench.displayPreferences': 'تفضيلات العرض',
     'workbench.theme.light': 'فاتح',
     'workbench.theme.dark': 'داكن',
@@ -175,6 +179,21 @@ describe('WorkbenchShellComponent localization', () => {
     ]);
     expect((fixture.nativeElement as HTMLElement).querySelector('.menu-button')?.getAttribute('aria-label'))
       .toBe('Toggle navigation');
+  });
+
+  it('places management commands under organization administration and hides them without management grants', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    const adminSection = element.querySelector('.sidebar-admin-nav');
+    const managementLink = element.querySelector('.sidebar-admin-nav a[href="/workbench/settings/management"]');
+
+    expect(adminSection?.getAttribute('aria-label')).toBe('Organization administration');
+    expect(managementLink?.textContent?.trim()).toBe('Management');
+
+    const organization = TestBed.inject(OrganizationContextService);
+    spyOn(organization, 'hasPermission').and.returnValue(false);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.sidebar-admin-nav')).toBeNull();
   });
 
   it('switches theme and language through the existing services and persists both preferences', async () => {
