@@ -313,6 +313,7 @@
   "workbench.nav.endpoints": "نقاط النهاية",
   "workbench.nav.swagger": "Swagger",
   "workbench.nav.governance": "الحوكمة",
+  "workbench.nav.organizationAdministration": "إدارة المؤسسة",
   "workbench.nav.management": "الإدارة",
   "workbench.nav.notifications": "الإشعارات",
   "workbench.nav.settings": "الإعدادات",

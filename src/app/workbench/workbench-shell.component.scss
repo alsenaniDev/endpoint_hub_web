@@ -79,6 +79,27 @@
   padding: 18px 9px;
 }
 
+.sidebar-admin-nav {
+  display: grid;
+  gap: 3px;
+  margin: 0 9px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.sidebar-section-label {
+  padding: 0 11px 5px;
+  color: var(--sidebar-subtle);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.admin-nav-link {
+  min-height: 34px;
+}
+
 .shell-preference-controls {
   display: flex;
   gap: 6px;

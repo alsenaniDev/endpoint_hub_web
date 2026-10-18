@@ -313,6 +313,7 @@
   "workbench.nav.endpoints": "Endpoints",
   "workbench.nav.swagger": "Swagger",
   "workbench.nav.governance": "Governance",
+  "workbench.nav.organizationAdministration": "Organization administration",
   "workbench.nav.management": "Management",
   "workbench.nav.notifications": "Notifications",
   "workbench.nav.settings": "Settings",
