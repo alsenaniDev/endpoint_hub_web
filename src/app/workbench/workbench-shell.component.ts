@@ -6,6 +6,7 @@ import { OrganizationContextService } from '../core/services/organization-contex
 import { LangService } from '../core/services/lang.service';
 import { ThemeService } from '../core/services/theme.service';
 import { isWorkbenchItemAvailable, workbenchNavigation, WorkbenchNavItem } from '../core/authorization/workbench-navigation';
+import { managementPermissions } from '../core/authorization/organization-navigation';
 import { NotificationBellComponent } from '../shared/components/notification-bell/notification-bell.component';
 import { OrganizationSwitcherComponent } from '../shared/components/organization-switcher/organization-switcher.component';
 import { TranslatePipe } from '../core/pipes/translate.pipe';
@@ -43,6 +44,11 @@ export class WorkbenchShellComponent implements OnInit {
   canVisit(item: WorkbenchNavItem): boolean {
     return this.organization.ready() &&
       isWorkbenchItemAvailable(item, key => this.organization.hasPermission(key), this.organization.canMutate());
+  }
+
+  canVisitManagement(): boolean {
+    return this.organization.ready() && this.organization.canMutate() &&
+      managementPermissions.some(permission => this.organization.hasPermission(permission));
   }
 
   closeMobileNav(): void {
